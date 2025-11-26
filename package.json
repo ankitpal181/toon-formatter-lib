@@ -1,0 +1,53 @@
+{
+    "name": "toon-converter",
+    "version": "1.0.0",
+    "description": "A lightweight library to convert between TOON (Token-Oriented Object Notation) and popular data formats (JSON, YAML, XML, CSV). Reduce LLM token costs by up to 40%.",
+    "main": "src/index.js",
+    "type": "module",
+    "scripts": {
+        "test": "node --test test/*.test.js",
+        "test:watch": "node --test --watch test/*.test.js"
+    },
+    "keywords": [
+        "toon",
+        "json",
+        "yaml",
+        "xml",
+        "csv",
+        "converter",
+        "llm",
+        "token",
+        "optimization",
+        "data-format",
+        "serialization"
+    ],
+    "author": "Ankit Pal",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/ankitpal181/toon-converter"
+    },
+    "bugs": {
+        "url": "https://github.com/ankitpal181/toon-converter/issues"
+    },
+    "homepage": "https://github.com/ankitpal181/toon-converter#readme",
+    "engines": {
+        "node": ">=16.0.0"
+    },
+    "dependencies": {
+        "js-yaml": "^4.1.0",
+        "papaparse": "^5.4.1"
+    },
+    "devDependencies": {
+        "xmldom": "^0.6.0"
+    },
+    "exports": {
+        ".": "./src/index.js",
+        "./json": "./src/json.js",
+        "./yaml": "./src/yaml.js",
+        "./xml": "./src/xml.js",
+        "./csv": "./src/csv.js",
+        "./validator": "./src/validator.js",
+        "./utils": "./src/utils.js"
+    }
+}
