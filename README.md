@@ -378,9 +378,9 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 🔗 Links
 
-- **GitHub**: https://github.com/ankitpal181/toon-converter
-- **NPM**: https://www.npmjs.com/package/toon-converter
-- **Online Tool**: https://toon-formatter.com
+- **GitHub**: https://github.com/ankitpal181/toon-formatter-lib
+- **NPM**: https://www.npmjs.com/package/toon-formatter
+- **Online Tool**: https://toonformatter.net/
 
 ---
 
