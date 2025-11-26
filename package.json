@@ -1,6 +1,10 @@
 {
     "name": "toon-formatter",
     "version": "1.0.1",
+    "funding": {
+        "type": "github",
+        "url": "https://github.com/sponsors/ankitpal181"
+    },
     "description": "A lightweight library to convert between TOON (Token-Oriented Object Notation) and popular data formats (JSON, YAML, XML, CSV). Reduce LLM token costs by up to 40%.",
     "main": "src/index.js",
     "type": "module",
