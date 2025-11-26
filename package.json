@@ -26,12 +26,12 @@
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "https://github.com/ankitpal181/toon-converter"
+        "url": "https://github.com/ankitpal181/toon-formatter-lib"
     },
     "bugs": {
-        "url": "https://github.com/ankitpal181/toon-converter/issues"
+        "url": "https://github.com/ankitpal181/toon-formatter-lib/issues"
     },
-    "homepage": "https://github.com/ankitpal181/toon-converter#readme",
+    "homepage": "https://github.com/ankitpal181/toon-formatter-lib#readme",
     "engines": {
         "node": ">=16.0.0"
     },
