@@ -1,5 +1,5 @@
 /**
- * TOON String Validator
+ * TOON String Validator (Enhanced)
  */
 
 import { splitByDelimiter } from './utils.js';
@@ -15,14 +15,14 @@ export function validateToonString(toonString) {
     }
 
     const lines = toonString.split('\n');
-    // Stack of contexts: { indent, type: 'root'|'object'|'array', expected?, count? }
+    // Stack of contexts: { indent, type: 'root'|'object'|'array', expected?, count?, isTabular? }
     const contextStack = [{ indent: 0, type: 'root', count: 0 }];
     let lineNumber = 0;
 
     // Regex Definitions (based on TOON Rules)
     const REGEX = {
         mapKey: /^[^:\[]+:\s*$/,
-        arrayKey: /^[^:]+\[(\d+)([\t|])?\](?:\{[^}]+\})?:\s*(.*)$/, // Capture N, delimiter, content
+        arrayKey: /^[^:\[]+\[(\d+)([\t|])?\](?:\{[^}]+\})?:\s*(.*)$/, // Capture N, delimiter, content
         rootArray: /^\[(\d+)([\t|])?\](?:\{[^}]+\})?:\s*(.*)$/,    // Capture N, delimiter, content
         listItem: /^\-.*/,
         listItemEmpty: /^\-\s*$/,
@@ -54,8 +54,29 @@ export function validateToonString(toonString) {
 
         const trimmedLine = line.trim();
         const currentIndent = rawLine.search(/\S|$/);
-        const currentContext = contextStack[contextStack.length - 1];
+        let currentContext = contextStack[contextStack.length - 1];
         const requiredIndent = currentContext.indent;
+
+        // --- Strict Check for Empty Blocks ---
+        // If the previous line opened a block (like an array) but we didn't indent,
+        // and it wasn't an inline array, then it's an empty block.
+        // If the array expects items (size > 0), this is an error.
+        if (lineNumber > 1) {
+            const prevLineRaw = lines[lineNumber - 2];
+            const prevLineTrimmed = prevLineRaw.trim();
+            const arrMatch = prevLineTrimmed.match(REGEX.arrayKey) || prevLineTrimmed.match(REGEX.rootArray);
+
+            if (arrMatch && currentIndent <= requiredIndent) {
+                // It was an array declaration, and we are NOT inside it (no indent increase).
+                const size = parseInt(arrMatch[1], 10);
+                const content = arrMatch[3];
+
+                // If no inline content and size > 0, it's a missing block.
+                if ((!content || content.trim() === '') && size > 0) {
+                    return { isValid: false, error: `L${lineNumber - 1}: Array declared with size ${size} but has no items (expected indented block).` };
+                }
+            }
+        }
 
         // --- Inline Array Validation ---
         let arrayMatch = trimmedLine.match(REGEX.arrayKey) || trimmedLine.match(REGEX.rootArray);
@@ -78,6 +99,7 @@ export function validateToonString(toonString) {
                 }
             } else {
                 // Block Array start. 
+                // If it's Root Array at indent 0, update root context.
                 if (trimmedLine.match(REGEX.rootArray) && contextStack.length === 1) {
                     contextStack[0].type = 'array';
                     contextStack[0].expected = size;
@@ -88,14 +110,17 @@ export function validateToonString(toonString) {
 
         // --- State Management (Tabular) ---
         if (isInsideTabularArray) {
+            // For tabular arrays, accept any indent >= root indent after the header
             const rootContext = contextStack[0];
             if (currentIndent >= rootContext.indent || (rootContext.indent === 0 && currentIndent > 0)) {
                 if (trimmedLine.includes(':') && !trimmedLine.startsWith('"')) {
                     return { isValid: false, error: `L${lineNumber}: Tabular rows cannot contain a colon.` };
                 }
+                // Count tabular row as item
                 if (rootContext.type === 'array') {
                     rootContext.count++;
                 }
+                // Update root indent if this is first data row
                 if (rootContext.indent === 0) {
                     rootContext.indent = currentIndent;
                 }
@@ -113,30 +138,43 @@ export function validateToonString(toonString) {
                 return { isValid: false, error: `L${lineNumber}: Indentation error.` };
             }
 
+            // Determine context type
             let newContext = { indent: currentIndent, type: 'object' };
 
             const prevArrayMatch = prevLineTrimmed.match(REGEX.arrayKey) || prevLineTrimmed.match(REGEX.rootArray);
             if (prevArrayMatch) {
+                // Check if this is a root array that was already initialized
                 const isRootArrayAlreadySet = prevLineTrimmed.match(REGEX.rootArray) &&
                     contextStack.length === 1 &&
                     contextStack[0].type === 'array';
 
+                const isTabular = prevLineTrimmed.includes('{') && prevLineTrimmed.includes('}');
+
                 if (!isRootArrayAlreadySet) {
+                    // Create new array context for non-root arrays
                     const size = parseInt(prevArrayMatch[1], 10);
-                    newContext = { indent: currentIndent, type: 'array', expected: size, count: 0 };
+                    newContext = { indent: currentIndent, type: 'array', expected: size, count: 0, isTabular: isTabular };
                     contextStack.push(newContext);
+                } else {
+                    // For root arrays, update the existing context
+                    contextStack[0].isTabular = isTabular;
                 }
             } else {
                 contextStack.push(newContext);
             }
 
+            // Update root array indent if this is the first indented item
             if (contextStack.length === 1 && contextStack[0].type === 'array' && contextStack[0].indent === 0) {
                 contextStack[0].indent = currentIndent;
             }
 
+            // Count the current line if it's a list item in an array
             const targetContext = contextStack[contextStack.length - 1];
             if (targetContext.type === 'array') {
-                if (trimmedLine.match(REGEX.listItem)) {
+                if (targetContext.isTabular) {
+                    // Tabular items don't need dash
+                    targetContext.count++;
+                } else if (trimmedLine.match(REGEX.listItem)) {
                     targetContext.count++;
                 }
             }
@@ -145,9 +183,11 @@ export function validateToonString(toonString) {
             // Un-indentation
             let foundMatch = false;
 
+            // Pop and Validate
             while (contextStack.length > 1) {
                 const popped = contextStack.pop();
 
+                // Validate Array Size on Close
                 if (popped.type === 'array') {
                     if (popped.count !== popped.expected) {
                         return { isValid: false, error: `Array size mismatch. Declared ${popped.expected}, found ${popped.count} items (ending around L${lineNumber}).` };
@@ -164,28 +204,41 @@ export function validateToonString(toonString) {
                 return { isValid: false, error: `L${lineNumber}: Invalid un-indentation.` };
             }
 
+            // After popping, count items in parent context if it's an array
             const parentContext = contextStack[contextStack.length - 1];
             if (parentContext.type === 'array') {
-                if (trimmedLine.match(REGEX.listItem)) {
+                if (parentContext.isTabular) {
+                    parentContext.count++;
+                } else if (trimmedLine.match(REGEX.listItem)) {
                     parentContext.count++;
                 }
             }
 
         } else {
             // Same Indent
+            // If array, count items
             if (currentContext.type === 'array') {
-                if (trimmedLine.match(REGEX.listItem)) {
+                if (currentContext.isTabular) {
+                    currentContext.count++;
+                } else if (trimmedLine.match(REGEX.listItem)) {
                     currentContext.count++;
                 }
             }
         }
+
+        // Update currentContext as it might have changed (push/pop)
+        currentContext = contextStack[contextStack.length - 1];
 
         // --- Syntax Check ---
         if (trimmedLine.match(REGEX.arrayKey) || trimmedLine.match(REGEX.rootArray)) {
             if (startsTabular(trimmedLine)) isInsideTabularArray = true;
         }
         else if (trimmedLine.match(REGEX.mapKey)) { }
-        else if (trimmedLine.match(REGEX.listItem)) { }
+        else if (trimmedLine.match(REGEX.listItem)) {
+            if (currentContext.type !== 'array') {
+                return { isValid: false, error: `L${lineNumber}: List item found in non-array context.` };
+            }
+        }
         else if (trimmedLine.includes(':')) {
             if (!trimmedLine.match(REGEX.keyValue)) {
                 return { isValid: false, error: `L${lineNumber}: Invalid Key-Value assignment.` };

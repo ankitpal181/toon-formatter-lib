@@ -2,7 +2,8 @@
  * JSON ↔ TOON Converter
  */
 
-import { formatValue, parseValue, splitByDelimiter } from './utils.js';
+import { formatValue, parseValue, splitByDelimiter, extractJsonFromString } from './utils.js';
+import { validateToonString } from './validator.js';
 
 /**
  * Converts JSON to TOON format
@@ -85,7 +86,10 @@ export function jsonToToon(data, key = '', depth = 0) {
     for (const childKey in data) {
         if (Object.prototype.hasOwnProperty.call(data, childKey)) {
             const child = data[childKey];
-            const block = jsonToToon(child, childKey, depth + 1);
+            // Only increment depth if we are inside a keyed object/block. 
+            // If we are at the root (key is empty), children should start at current depth (0).
+            const nextDepth = key ? depth + 1 : depth;
+            const block = jsonToToon(child, childKey, nextDepth);
             lines.push(block);
         }
     }
@@ -97,8 +101,15 @@ export function jsonToToon(data, key = '', depth = 0) {
  * Converts TOON to JSON format
  * @param {string} toonString - TOON formatted string
  * @returns {*} Parsed JSON data
+ * @throws {Error} If TOON string is invalid
  */
 export function toonToJson(toonString) {
+    // Validate TOON string before conversion
+    const validationStatus = validateToonString(toonString);
+    if (!validationStatus.isValid) {
+        throw new Error(`Invalid TOON: ${validationStatus.error}`);
+    }
+
     const lines = toonString.split('\n');
     let root = {};
     let stack = [];
@@ -294,4 +305,42 @@ export function toonToJson(toonString) {
     }
 
     return root;
+}
+
+/**
+ * Converts mixed text containing JSON to TOON format
+ * Extracts all JSON objects/arrays from text and converts them to TOON
+ * @param {string} text - Text containing one or more JSON objects/arrays
+ * @returns {string} Text with JSON converted to TOON
+ * @throws {Error} If JSON is invalid
+ */
+export function jsonTextToToon(text) {
+    if (!text || typeof text !== 'string') {
+        throw new Error('Input must be a non-empty string');
+    }
+
+    let convertedText = text;
+    let iterationCount = 0;
+    const maxIterations = 100; // Prevent infinite loops
+
+    while (iterationCount < maxIterations) {
+        const jsonString = extractJsonFromString(convertedText);
+
+        if (!jsonString) {
+            // No more JSON found
+            break;
+        }
+
+        try {
+            const jsonObject = JSON.parse(jsonString);
+            const toonString = jsonToToon(jsonObject);
+            const toonOutput = toonString.trim();
+            convertedText = convertedText.replace(jsonString, toonOutput);
+            iterationCount++;
+        } catch (e) {
+            throw new Error(`Invalid JSON: ${e.message}`);
+        }
+    }
+
+    return convertedText;
 }

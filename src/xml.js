@@ -4,7 +4,7 @@
  */
 
 import { jsonToToon, toonToJson } from './json.js';
-import { encodeXmlReservedChars } from './utils.js';
+import { encodeXmlReservedChars, extractXmlFromString } from './utils.js';
 
 /**
  * Converts XML DOM to JSON object
@@ -115,9 +115,9 @@ function jsonObjectToXml(obj) {
 }
 
 /**
- * Converts XML to TOON format (Browser environment)
+ * Converts XML to TOON format
  * @param {string} xmlString - XML formatted string
- * @returns {string} TOON formatted string
+ * @returns {Promise<string>} TOON formatted string
  * @throws {Error} If XML is invalid or DOMParser is not available
  */
 export async function xmlToToon(xmlString) {
@@ -171,4 +171,41 @@ export function toonToXml(toonString) {
 
     const jsonObject = toonToJson(toonString);
     return jsonObjectToXml(jsonObject);
+}
+
+/**
+ * Converts mixed text containing XML to TOON format
+ * Extracts all XML elements from text and converts them to TOON
+ * @param {string} text - Text containing one or more XML elements
+ * @returns {Promise<string>} Text with XML converted to TOON
+ * @throws {Error} If XML is invalid
+ */
+export async function xmlTextToToon(text) {
+    if (!text || typeof text !== 'string') {
+        throw new Error('Input must be a non-empty string');
+    }
+
+    let convertedText = text;
+    let iterationCount = 0;
+    const maxIterations = 100; // Prevent infinite loops
+
+    while (iterationCount < maxIterations) {
+        const xmlString = extractXmlFromString(convertedText);
+        
+        if (!xmlString) {
+            // No more XML found
+            break;
+        }
+
+        try {
+            const toonString = await xmlToToon(xmlString);
+            const toonOutput = toonString.trim();
+            convertedText = convertedText.replace(xmlString, toonOutput);
+            iterationCount++;
+        } catch (e) {
+            throw new Error(`Invalid XML: ${e.message}`);
+        }
+    }
+
+    return convertedText;
 }

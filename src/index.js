@@ -9,21 +9,31 @@
  * @module toon-converter
  */
 
-import { jsonToToon, toonToJson } from './json.js';
+import { jsonToToon, toonToJson, jsonTextToToon } from './json.js';
 import { yamlToToon, toonToYaml } from './yaml.js';
-import { xmlToToon, toonToXml } from './xml.js';
-import { csvToToon, csvToToonSync, toonToCsv } from './csv.js';
+import { xmlToToon, toonToXml, xmlTextToToon } from './xml.js';
+import { csvToToon, csvToToonSync, toonToCsv, csvTextToToon, csvTextToToonSync } from './csv.js';
 import { validateToonString } from './validator.js';
-import { encodeXmlReservedChars, splitByDelimiter, parseValue, formatValue } from './utils.js';
+import {
+    encodeXmlReservedChars,
+    splitByDelimiter,
+    parseValue,
+    formatValue,
+    extractJsonFromString,
+    extractYamlFromString,
+    extractXmlFromString,
+    extractCsvFromString
+} from './utils.js';
 
 // Exports
 export {
-    jsonToToon, toonToJson,
+    jsonToToon, toonToJson, jsonTextToToon,
     yamlToToon, toonToYaml,
-    xmlToToon, toonToXml,
-    csvToToon, csvToToonSync, toonToCsv,
+    xmlToToon, toonToXml, xmlTextToToon,
+    csvToToon, csvToToonSync, toonToCsv, csvTextToToon, csvTextToToonSync,
     validateToonString,
-    encodeXmlReservedChars, splitByDelimiter, parseValue, formatValue
+    encodeXmlReservedChars, splitByDelimiter, parseValue, formatValue,
+    extractJsonFromString, extractYamlFromString, extractXmlFromString, extractCsvFromString
 };
 
 /**
