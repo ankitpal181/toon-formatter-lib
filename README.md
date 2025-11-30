@@ -145,8 +145,8 @@ const csvResult = csvToToonSync(csvMixedText);
 ```
 
 **Important Notes:**
-- ✅ **Supports mixed text**: `jsonToToon`, `xmlToToon`, `csvToToon`, `yamlToToon`
-- ❌ **Pure data only**: `toonToJson`, `toonToXml`, `toonToCsv`, `toonToYaml`
+- ✅ **Supports mixed text**: `jsonToToon`, `xmlToToon`, `csvToToon`
+- ❌ **Pure data only**: `yamlToToon`, `toonToJson`, `toonToXml`, `toonToCsv`, `toonToYaml`
 
 ### Using the ToonConverter Class
 
@@ -251,7 +251,7 @@ Mixed text support allows you to convert data that's embedded within regular tex
 | `jsonToToon()` | ✅ | ✅ | Extracts all JSON objects/arrays |
 | `xmlToToon()` | ✅ | ✅ | Extracts all XML elements |
 | `csvToToon()` | ✅ | ✅ | Extracts CSV tables |
-| `yamlToToon()` | ✅ | ✅ | Extracts YAML blocks |
+| `yamlToToon()` | ✅ | ❌ | Pure YAML only |
 | `toonToJson()` | ✅ | ❌ | Pure TOON only |
 | `toonToXml()` | ✅ | ❌ | Pure TOON only |
 | `toonToCsv()` | ✅ | ❌ | Pure TOON only |
