@@ -6,7 +6,7 @@
  * 
  * Reduce LLM token costs by up to 40% using TOON format.
  * 
- * @module toon-converter
+ * @module toon-formatter
  */
 
 import { jsonToToonSync, jsonToToon, toonToJsonSync, toonToJson } from './json.js';

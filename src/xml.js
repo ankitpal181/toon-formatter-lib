@@ -134,9 +134,18 @@ function parseXmlToToonSync(xmlString) {
         'application/xml'
     );
 
-    const parserError = xmlDoc.querySelector('parsererror');
-    if (parserError) {
-        throw new Error(parserError.textContent);
+    // Check for parser errors (works in both browser and xmldom)
+    if (xmlDoc.querySelector) {
+        // Browser environment
+        const parserError = xmlDoc.querySelector('parsererror');
+        if (parserError) {
+            throw new Error(parserError.textContent);
+        }
+    } else {
+        // xmldom environment - check documentElement
+        if (xmlDoc.documentElement && xmlDoc.documentElement.nodeName === 'parsererror') {
+            throw new Error(xmlDoc.documentElement.textContent || 'XML parsing error');
+        }
     }
 
     const jsonObject = xmlToJsonObject(xmlDoc);

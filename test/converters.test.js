@@ -5,9 +5,9 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { yamlToToon, toonToYaml } from '../src/yaml.js';
-import { xmlToToon, toonToXml } from '../src/xml.js';
-import { csvToToon, csvToToonSync, toonToCsv } from '../src/csv.js';
+import { yamlToToonSync, toonToYamlSync } from '../src/yaml.js';
+import { xmlToToon, toonToXmlSync } from '../src/xml.js';
+import { csvToToon, csvToToonSync, toonToCsvSync } from '../src/csv.js';
 
 // --- YAML Tests ---
 
@@ -16,14 +16,14 @@ test('YAML to TOON - Simple Object', () => {
 name: Alice
 age: 30
 `;
-    const toon = yamlToToon(yaml);
+    const toon = yamlToToonSync(yaml);
     assert.ok(toon.includes('name: "Alice"'));
     assert.ok(toon.includes('age: 30'));
 });
 
 test('TOON to YAML - Simple Object', () => {
     const toon = `name: "Alice"\nage: 30`;
-    const yaml = toonToYaml(toon);
+    const yaml = toonToYamlSync(toon);
     assert.ok(yaml.includes('name: Alice'));
     assert.ok(yaml.includes('age: 30'));
 });
@@ -36,7 +36,7 @@ user:
     - admin
     - editor
 `;
-    const toon = yamlToToon(yaml);
+    const toon = yamlToToonSync(yaml);
     assert.ok(toon.includes('user:'));
     assert.ok(toon.includes('name: "Alice"'));
     assert.ok(toon.includes('roles[2]:'));
@@ -56,7 +56,7 @@ test('XML to TOON - Simple Element', async () => {
 
 test('TOON to XML - Simple Element', () => {
     const toon = `user:\n  name: "Alice"\n  age: 30`;
-    const xml = toonToXml(toon);
+    const xml = toonToXmlSync(toon);
 
     assert.ok(xml.includes('<user>'));
     assert.ok(xml.includes('<name>Alice</name>'));
@@ -111,7 +111,7 @@ test('TOON to CSV - Basic', () => {
   "Alice","Admin"
   "Bob","User"
 `;
-    const csv = toonToCsv(toon);
+    const csv = toonToCsvSync(toon);
 
     assert.ok(csv.includes('name,role'));
     assert.ok(csv.includes('Alice,Admin'));
@@ -124,7 +124,7 @@ Alice,100
 Bob,95`;
 
     const toon = await csvToToon(originalCsv);
-    const finalCsv = toonToCsv(toon);
+    const finalCsv = toonToCsvSync(toon);
 
     // Note: PapaParse might add/remove quotes or change spacing, so exact match isn't always guaranteed
     // But content should be same

@@ -3,7 +3,7 @@
  */
 
 import { formatValue, parseValue, splitByDelimiter, extractJsonFromString } from './utils.js';
-import { validateToonString } from './validator.js';
+import { validateToonStringSync } from './validator.js';
 
 /**
  * Converts JSON to TOON format (Synchronous)
@@ -125,7 +125,7 @@ export async function jsonToToon(data) {
  */
 export function toonToJsonSync(toonString) {
     // Validate TOON string before conversion
-    const validationStatus = validateToonString(toonString);
+    const validationStatus = validateToonStringSync(toonString);
     if (!validationStatus.isValid) {
         throw new Error(`Invalid TOON: ${validationStatus.error}`);
     }

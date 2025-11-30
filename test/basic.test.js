@@ -5,12 +5,12 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { jsonToToon, toonToJson } from '../src/json.js';
-import { validateToonString } from '../src/validator.js';
+import { jsonToToonSync, toonToJsonSync } from '../src/json.js';
+import { validateToonStringSync } from '../src/validator.js';
 
 test('JSON to TOON - Simple Object', () => {
     const input = { name: "Alice", age: 30, active: true };
-    const result = jsonToToon(input);
+    const result = jsonToToonSync(input);
 
     assert.ok(result.includes('name: "Alice"'));
     assert.ok(result.includes('age: 30'));
@@ -19,7 +19,7 @@ test('JSON to TOON - Simple Object', () => {
 
 test('JSON to TOON - Array of Primitives', () => {
     const input = { numbers: [1, 2, 3, 4, 5] };
-    const result = jsonToToon(input);
+    const result = jsonToToonSync(input);
 
     assert.ok(result.includes('numbers[5]: 1, 2, 3, 4, 5'));
 });
@@ -31,7 +31,7 @@ test('JSON to TOON - Tabular Array', () => {
             { id: 2, name: "Bob", active: false }
         ]
     };
-    const result = jsonToToon(input);
+    const result = jsonToToonSync(input);
 
     assert.ok(result.includes('users[2]{id,name,active}:'));
     assert.ok(result.includes('1,"Alice",true'));
@@ -40,7 +40,7 @@ test('JSON to TOON - Tabular Array', () => {
 
 test('TOON to JSON - Simple Object', () => {
     const input = `name: "Alice"\nage: 30\nactive: true`;
-    const result = toonToJson(input);
+    const result = toonToJsonSync(input);
 
     assert.strictEqual(result.name, "Alice");
     assert.strictEqual(result.age, 30);
@@ -49,7 +49,7 @@ test('TOON to JSON - Simple Object', () => {
 
 test('TOON to JSON - Array of Primitives', () => {
     const input = `numbers[5]: 1, 2, 3, 4, 5`;
-    const result = toonToJson(input);
+    const result = toonToJsonSync(input);
 
     assert.ok(Array.isArray(result.numbers));
     assert.strictEqual(result.numbers.length, 5);
@@ -58,7 +58,7 @@ test('TOON to JSON - Array of Primitives', () => {
 
 test('TOON to JSON - Tabular Array', () => {
     const input = `users[2]{id,name,active}:\n  1,"Alice",true\n  2,"Bob",false`;
-    const result = toonToJson(input);
+    const result = toonToJsonSync(input);
 
     assert.ok(Array.isArray(result.users));
     assert.strictEqual(result.users.length, 2);
@@ -79,15 +79,15 @@ test('Round-trip Conversion - Object', () => {
         ]
     };
 
-    const toon = jsonToToon(original);
-    const result = toonToJson(toon);
+    const toon = jsonToToonSync(original);
+    const result = toonToJsonSync(toon);
 
     assert.deepStrictEqual(result, original);
 });
 
 test('Validator - Valid TOON', () => {
     const input = `name: "Alice"\nage: 30`;
-    const result = validateToonString(input);
+    const result = validateToonStringSync(input);
 
     assert.strictEqual(result.isValid, true);
     assert.strictEqual(result.error, null);
@@ -95,7 +95,7 @@ test('Validator - Valid TOON', () => {
 
 test('Validator - Invalid TOON (Array Size Mismatch)', () => {
     const input = `items[3]: 1, 2`; // Declared 3, but only 2 items
-    const result = validateToonString(input);
+    const result = validateToonStringSync(input);
 
     assert.strictEqual(result.isValid, false);
     assert.ok(result.error.includes('Array size mismatch'));
@@ -103,7 +103,7 @@ test('Validator - Invalid TOON (Array Size Mismatch)', () => {
 
 test('Validator - Valid Tabular Array', () => {
     const input = `users[2]{id,name}:\n  1,"Alice"\n  2,"Bob"`;
-    const result = validateToonString(input);
+    const result = validateToonStringSync(input);
 
     assert.strictEqual(result.isValid, true);
     assert.strictEqual(result.error, null);
@@ -111,14 +111,14 @@ test('Validator - Valid Tabular Array', () => {
 
 test('Edge Case - Empty Object', () => {
     const input = {};
-    const result = jsonToToon(input);
+    const result = jsonToToonSync(input);
 
     assert.strictEqual(result.trim(), '');
 });
 
 test('Edge Case - Null Value', () => {
     const input = { value: null };
-    const result = jsonToToon(input);
+    const result = jsonToToonSync(input);
 
     assert.ok(result.includes('value: null'));
 });
@@ -132,8 +132,8 @@ test('Edge Case - Nested Objects', () => {
         }
     };
 
-    const toon = jsonToToon(input);
-    const result = toonToJson(toon);
+    const toon = jsonToToonSync(input);
+    const result = toonToJsonSync(toon);
 
     assert.deepStrictEqual(result, input);
 });
