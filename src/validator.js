@@ -5,11 +5,11 @@
 import { splitByDelimiter } from './utils.js';
 
 /**
- * Validates a TOON string for syntax and structural correctness
+ * Validates a TOON string for syntax and structural correctness (Synchronous)
  * @param {string} toonString - TOON string to validate
  * @returns {{isValid: boolean, error: string|null}} Validation result
  */
-export function validateToonString(toonString) {
+export function validateToonStringSync(toonString) {
     if (!toonString || typeof toonString !== 'string') {
         return { isValid: false, error: 'Input must be a non-empty string.' };
     }
@@ -268,4 +268,13 @@ export function validateToonString(toonString) {
     }
 
     return { isValid: true, error: null };
+}
+
+/**
+ * Validates a TOON string for syntax and structural correctness (Async)
+ * @param {string} toonString - TOON string to validate
+ * @returns {{isValid: boolean, error: string|null}} Validation result
+ */
+export async function validateToonString(toonString) {
+    return validateToonStringSync(toonString);
 }

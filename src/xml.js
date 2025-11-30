@@ -3,7 +3,7 @@
  * Note: This module is designed for Node.js environments
  */
 
-import { jsonToToon, toonToJson } from './json.js';
+import { jsonToToonSync, toonToJsonSync } from './json.js';
 import { encodeXmlReservedChars, extractXmlFromString } from './utils.js';
 
 /**
@@ -115,97 +115,103 @@ function jsonObjectToXml(obj) {
 }
 
 /**
- * Converts XML to TOON format
- * @param {string} xmlString - XML formatted string
- * @returns {Promise<string>} TOON formatted string
+ * Internal core function to convert pure XML string to TOON (Sync)
+ * @param {string} xmlString 
+ * @returns {string}
+ */
+function parseXmlToToonSync(xmlString) {
+    let Parser;
+
+    if (typeof DOMParser !== 'undefined') {
+        Parser = DOMParser;
+    } else {
+        throw new Error('DOMParser is not available. For synchronous XML conversion in Node.js, please use the async version `xmlToToon` or polyfill global.DOMParser.');
+    }
+
+    const parser = new Parser();
+    const xmlDoc = parser.parseFromString(
+        encodeXmlReservedChars(xmlString),
+        'application/xml'
+    );
+
+    const parserError = xmlDoc.querySelector('parsererror');
+    if (parserError) {
+        throw new Error(parserError.textContent);
+    }
+
+    const jsonObject = xmlToJsonObject(xmlDoc);
+    return jsonToToonSync(jsonObject);
+}
+
+/**
+ * Converts XML (or mixed text with XML) to TOON format (Synchronous)
+ * @param {string} xmlString - XML formatted string or mixed text
+ * @returns {string} TOON formatted string
  * @throws {Error} If XML is invalid or DOMParser is not available
  */
-export async function xmlToToon(xmlString) {
+export function xmlToToonSync(xmlString) {
     if (!xmlString || typeof xmlString !== 'string') {
         throw new Error('Input must be a non-empty string');
     }
 
-    // Check if we're in a browser environment
-    if (typeof DOMParser !== 'undefined') {
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(
-            encodeXmlReservedChars(xmlString),
-            'application/xml'
-        );
-
-        const parserError = xmlDoc.querySelector('parsererror');
-        if (parserError) {
-            throw new Error(parserError.textContent);
-        }
-
-        const jsonObject = xmlToJsonObject(xmlDoc);
-        return jsonToToon(jsonObject);
-    }
-
-    // Node.js environment - require xmldom
-    try {
-        const { DOMParser: NodeDOMParser } = await import('xmldom');
-        const parser = new NodeDOMParser();
-        const xmlDoc = parser.parseFromString(
-            encodeXmlReservedChars(xmlString),
-            'application/xml'
-        );
-
-        const jsonObject = xmlToJsonObject(xmlDoc);
-        return jsonToToon(jsonObject);
-    } catch (error) {
-        throw new Error('XML parsing requires DOMParser (browser) or xmldom package (Node.js). Install xmldom: npm install xmldom');
-    }
-}
-
-/**
- * Converts TOON to XML format
- * @param {string} toonString - TOON formatted string
- * @returns {string} XML formatted string
- * @throws {Error} If TOON is invalid
- */
-export function toonToXml(toonString) {
-    if (!toonString || typeof toonString !== 'string') {
-        throw new Error('Input must be a non-empty string');
-    }
-
-    const jsonObject = toonToJson(toonString);
-    return jsonObjectToXml(jsonObject);
-}
-
-/**
- * Converts mixed text containing XML to TOON format
- * Extracts all XML elements from text and converts them to TOON
- * @param {string} text - Text containing one or more XML elements
- * @returns {Promise<string>} Text with XML converted to TOON
- * @throws {Error} If XML is invalid
- */
-export async function xmlTextToToon(text) {
-    if (!text || typeof text !== 'string') {
-        throw new Error('Input must be a non-empty string');
-    }
-
-    let convertedText = text;
+    let convertedText = xmlString;
     let iterationCount = 0;
-    const maxIterations = 100; // Prevent infinite loops
+    const maxIterations = 100;
 
     while (iterationCount < maxIterations) {
-        const xmlString = extractXmlFromString(convertedText);
-        
-        if (!xmlString) {
-            // No more XML found
-            break;
-        }
+        const xmlBlock = extractXmlFromString(convertedText);
+        if (!xmlBlock) break;
 
         try {
-            const toonString = await xmlToToon(xmlString);
+            const toonString = parseXmlToToonSync(xmlBlock);
             const toonOutput = toonString.trim();
-            convertedText = convertedText.replace(xmlString, toonOutput);
+            convertedText = convertedText.replace(xmlBlock, toonOutput);
             iterationCount++;
         } catch (e) {
-            throw new Error(`Invalid XML: ${e.message}`);
+            break;
         }
     }
 
     return convertedText;
+}
+
+/**
+ * Converts XML (or mixed text with XML) to TOON format (Async)
+ * @param {string} xmlString - XML formatted string or mixed text
+ * @returns {Promise<string>} TOON formatted string
+ */
+export async function xmlToToon(xmlString) {
+    if (typeof DOMParser === 'undefined') {
+        try {
+            const { DOMParser: NodeDOMParser } = await import('xmldom');
+            global.DOMParser = NodeDOMParser;
+        } catch (e) {
+            // Ignore if import fails, xmlToToonSync will throw appropriate error
+        }
+    }
+    return xmlToToonSync(xmlString);
+}
+
+/**
+ * Converts TOON to XML format (Synchronous)
+ * @param {string} toonString - TOON formatted string
+ * @returns {string} XML formatted string
+ * @throws {Error} If TOON is invalid
+ */
+export function toonToXmlSync(toonString) {
+    if (!toonString || typeof toonString !== 'string') {
+        throw new Error('Input must be a non-empty string');
+    }
+
+    const jsonObject = toonToJsonSync(toonString);
+    return jsonObjectToXml(jsonObject);
+}
+
+/**
+ * Converts TOON to XML format (Async)
+ * @param {string} toonString - TOON formatted string
+ * @returns {Promise<string>} XML formatted string
+ */
+export async function toonToXml(toonString) {
+    return toonToXmlSync(toonString);
 }

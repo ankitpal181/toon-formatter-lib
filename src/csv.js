@@ -3,19 +3,15 @@
  */
 
 import Papa from 'papaparse';
-import { jsonToToon, toonToJson } from './json.js';
+import { jsonToToonSync, toonToJsonSync } from './json.js';
 import { extractCsvFromString } from './utils.js';
-/**
- * Converts CSV to TOON format
- * @param {string} csvString - CSV formatted string
- * @returns {Promise<string>} TOON formatted string
- * @throws {Error} If CSV is invalid
- */
-export function csvToToon(csvString) {
-    if (!csvString || typeof csvString !== 'string') {
-        throw new Error('Input must be a non-empty string');
-    }
 
+/**
+ * Internal core function to convert pure CSV string to TOON (Async)
+ * @param {string} csvString 
+ * @returns {Promise<string>}
+ */
+function parseCsvToToon(csvString) {
     return new Promise((resolve, reject) => {
         Papa.parse(csvString, {
             header: true,
@@ -28,7 +24,7 @@ export function csvToToon(csvString) {
                         throw new Error("CSV parsing failed — cannot convert.");
                     }
 
-                    const toonString = jsonToToon(jsonObject);
+                    const toonString = jsonToToonSync(jsonObject);
                     resolve(toonString);
                 } catch (error) {
                     reject(error);
@@ -42,16 +38,11 @@ export function csvToToon(csvString) {
 }
 
 /**
- * Converts CSV to TOON format (synchronous version)
- * @param {string} csvString - CSV formatted string
- * @returns {string} TOON formatted string
- * @throws {Error} If CSV is invalid
+ * Internal core function to convert pure CSV string to TOON (Sync)
+ * @param {string} csvString 
+ * @returns {string}
  */
-export function csvToToonSync(csvString) {
-    if (!csvString || typeof csvString !== 'string') {
-        throw new Error('Input must be a non-empty string');
-    }
-
+function parseCsvToToonSync(csvString) {
     const results = Papa.parse(csvString, {
         header: true,
         dynamicTyping: true,
@@ -67,21 +58,63 @@ export function csvToToonSync(csvString) {
         throw new Error("CSV parsing failed — cannot convert.");
     }
 
-    return jsonToToon(jsonObject);
+    return jsonToToonSync(jsonObject);
 }
 
 /**
- * Converts TOON to CSV format
+ * Converts CSV (or mixed text with CSV) to TOON format (Async)
+ * @param {string} csvString - CSV formatted string or mixed text
+ * @returns {Promise<string>} TOON formatted string
+ * @throws {Error} If CSV is invalid
+ */
+export async function csvToToon(csvString) {
+    return csvToToonSync(csvString);
+}
+
+/**
+ * Converts CSV (or mixed text with CSV) to TOON format (synchronous version)
+ * @param {string} csvString - CSV formatted string or mixed text
+ * @returns {string} TOON formatted string
+ * @throws {Error} If CSV is invalid
+ */
+export function csvToToonSync(csvString) {
+    if (!csvString || typeof csvString !== 'string') {
+        throw new Error('Input must be a non-empty string');
+    }
+
+    let convertedText = csvString;
+    let iterationCount = 0;
+    const maxIterations = 100;
+
+    while (iterationCount < maxIterations) {
+        const csvBlock = extractCsvFromString(convertedText);
+        if (!csvBlock) break;
+
+        try {
+            const toonString = parseCsvToToonSync(csvBlock);
+            const toonOutput = toonString.trim();
+            convertedText = convertedText.replace(csvBlock, toonOutput);
+            iterationCount++;
+        } catch (e) {
+            break;
+        }
+    }
+
+    return convertedText;
+}
+
+/**
+ * Converts TOON to CSV format (Synchronous)
  * @param {string} toonString - TOON formatted string
  * @returns {string} CSV formatted string
  * @throws {Error} If TOON is invalid
  */
-export function toonToCsv(toonString) {
+export function toonToCsvSync(toonString) {
     if (!toonString || typeof toonString !== 'string') {
         throw new Error('Input must be a non-empty string');
     }
 
-    const jsonObject = toonToJson(toonString);
+    const jsonObject = toonToJsonSync(toonString);
 
     const csvString = Papa.unparse(jsonObject, {
         header: true,
@@ -92,75 +125,10 @@ export function toonToCsv(toonString) {
 }
 
 /**
- * Converts mixed text containing CSV to TOON format
- * Extracts all CSV data from text and converts it to TOON
- * @param {string} text - Text containing CSV data
- * @returns {Promise<string>} Text with CSV converted to TOON
- * @throws {Error} If CSV is invalid
+ * Converts TOON to CSV format (Async)
+ * @param {string} toonString - TOON formatted string
+ * @returns {Promise<string>} CSV formatted string
  */
-export async function csvTextToToon(text) {
-    if (!text || typeof text !== 'string') {
-        throw new Error('Input must be a non-empty string');
-    }
-
-    let convertedText = text;
-    let iterationCount = 0;
-    const maxIterations = 100; // Prevent infinite loops
-
-    while (iterationCount < maxIterations) {
-        const csvString = extractCsvFromString(convertedText);
-
-        if (!csvString) {
-            // No more CSV found
-            break;
-        }
-
-        try {
-            const toonString = await csvToToon(csvString);
-            const toonOutput = toonString.trim();
-            convertedText = convertedText.replace(csvString, toonOutput);
-            iterationCount++;
-        } catch (e) {
-            throw new Error(`Invalid CSV: ${e.message}`);
-        }
-    }
-
-    return convertedText;
-}
-
-/**
- * Converts mixed text containing CSV to TOON format (synchronous)
- * Extracts all CSV data from text and converts it to TOON
- * @param {string} text - Text containing CSV data
- * @returns {string} Text with CSV converted to TOON
- * @throws {Error} If CSV is invalid
- */
-export function csvTextToToonSync(text) {
-    if (!text || typeof text !== 'string') {
-        throw new Error('Input must be a non-empty string');
-    }
-
-    let convertedText = text;
-    let iterationCount = 0;
-    const maxIterations = 100; // Prevent infinite loops
-
-    while (iterationCount < maxIterations) {
-        const csvString = extractCsvFromString(convertedText);
-
-        if (!csvString) {
-            // No more CSV found
-            break;
-        }
-
-        try {
-            const toonString = csvToToonSync(csvString);
-            const toonOutput = toonString.trim();
-            convertedText = convertedText.replace(csvString, toonOutput);
-            iterationCount++;
-        } catch (e) {
-            throw new Error(`Invalid CSV: ${e.message}`);
-        }
-    }
-
-    return convertedText;
+export async function toonToCsv(toonString) {
+    return toonToCsvSync(toonString);
 }

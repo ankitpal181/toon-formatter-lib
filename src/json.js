@@ -6,13 +6,37 @@ import { formatValue, parseValue, splitByDelimiter, extractJsonFromString } from
 import { validateToonString } from './validator.js';
 
 /**
- * Converts JSON to TOON format
+ * Converts JSON to TOON format (Synchronous)
  * @param {*} data - JSON data to convert
  * @param {string} key - Current key name (for recursion)
  * @param {number} depth - Current indentation depth
  * @returns {string} TOON formatted string
  */
-export function jsonToToon(data, key = '', depth = 0) {
+export function jsonToToonSync(data, key = '', depth = 0) {
+    // Handle String Input (Potential JSON string or Mixed Text)
+    if (typeof data === 'string' && key === '' && depth === 0) {
+        let convertedText = data;
+        let iterationCount = 0;
+        const maxIterations = 100;
+
+        while (iterationCount < maxIterations) {
+            const jsonString = extractJsonFromString(convertedText);
+            if (!jsonString) break;
+
+            try {
+                const jsonObject = JSON.parse(jsonString);
+                // Recursively call jsonToToonSync with the object
+                const toonString = jsonToToonSync(jsonObject);
+                const toonOutput = toonString.trim();
+                convertedText = convertedText.replace(jsonString, toonOutput);
+                iterationCount++;
+            } catch (e) {
+                break;
+            }
+        }
+        return convertedText;
+    }
+
     const indent = '  '.repeat(depth);
     const nextIndent = '  '.repeat(depth + 1);
 
@@ -62,48 +86,44 @@ export function jsonToToon(data, key = '', depth = 0) {
             return lines.join('\n');
         }
 
-        // ---- YAML-STYLE ARRAY (nested objects present) ----
+        // ---- STANDARD ARRAY OF OBJECTS ----
         const lines = [];
         lines.push(`${indent}${key}[${length}]:`);
-
-        data.forEach(row => {
-            lines.push(`${nextIndent}-`); // item marker
-            for (const f of fields) {
-                const child = row[f];
-                const block = jsonToToon(child, f, depth + 2);
-                lines.push(block);
-            }
+        data.forEach(item => {
+            lines.push(jsonToToonSync(item, '', depth + 1));
         });
-
         return lines.join('\n');
     }
 
     // ---- Object ----
     const lines = [];
-
-    if (key) lines.push(`${indent}${key}:`);
-
-    for (const childKey in data) {
-        if (Object.prototype.hasOwnProperty.call(data, childKey)) {
-            const child = data[childKey];
-            // Only increment depth if we are inside a keyed object/block. 
-            // If we are at the root (key is empty), children should start at current depth (0).
-            const nextDepth = key ? depth + 1 : depth;
-            const block = jsonToToon(child, childKey, nextDepth);
-            lines.push(block);
-        }
+    if (key) {
+        lines.push(`${indent}${key}:`);
     }
+
+    Object.keys(data).forEach(k => {
+        lines.push(jsonToToonSync(data[k], k, key ? depth + 1 : depth));
+    });
 
     return lines.join('\n');
 }
 
 /**
- * Converts TOON to JSON format
+ * Converts JSON to TOON format (Async)
+ * @param {*} data - JSON data to convert
+ * @returns {Promise<string>} TOON formatted string
+ */
+export async function jsonToToon(data) {
+    return jsonToToonSync(data);
+}
+
+/**
+ * Converts TOON to JSON format (Synchronous)
  * @param {string} toonString - TOON formatted string
- * @returns {*} Parsed JSON data
+ * @returns {Object} JSON object
  * @throws {Error} If TOON string is invalid
  */
-export function toonToJson(toonString) {
+export function toonToJsonSync(toonString) {
     // Validate TOON string before conversion
     const validationStatus = validateToonString(toonString);
     if (!validationStatus.isValid) {
@@ -308,39 +328,10 @@ export function toonToJson(toonString) {
 }
 
 /**
- * Converts mixed text containing JSON to TOON format
- * Extracts all JSON objects/arrays from text and converts them to TOON
- * @param {string} text - Text containing one or more JSON objects/arrays
- * @returns {string} Text with JSON converted to TOON
- * @throws {Error} If JSON is invalid
+ * Converts TOON to JSON format (Async)
+ * @param {string} toonString - TOON formatted string
+ * @returns {Promise<Object>} Parsed JSON data
  */
-export function jsonTextToToon(text) {
-    if (!text || typeof text !== 'string') {
-        throw new Error('Input must be a non-empty string');
-    }
-
-    let convertedText = text;
-    let iterationCount = 0;
-    const maxIterations = 100; // Prevent infinite loops
-
-    while (iterationCount < maxIterations) {
-        const jsonString = extractJsonFromString(convertedText);
-
-        if (!jsonString) {
-            // No more JSON found
-            break;
-        }
-
-        try {
-            const jsonObject = JSON.parse(jsonString);
-            const toonString = jsonToToon(jsonObject);
-            const toonOutput = toonString.trim();
-            convertedText = convertedText.replace(jsonString, toonOutput);
-            iterationCount++;
-        } catch (e) {
-            throw new Error(`Invalid JSON: ${e.message}`);
-        }
-    }
-
-    return convertedText;
+export async function toonToJson(toonString) {
+    return toonToJsonSync(toonString);
 }

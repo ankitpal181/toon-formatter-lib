@@ -150,61 +150,6 @@ export function extractJsonFromString(text) {
 }
 
 /**
- * Extracts YAML from mixed text
- * @param {string} text - Text containing YAML
- * @returns {string|null} Extracted YAML string or null
- */
-export function extractYamlFromString(text) {
-    if (!text || typeof text !== 'string') return null;
-    const lines = text.split('\n');
-    let startLineIndex = -1;
-    let baseIndent = -1;
-
-    // Regex for YAML start: "key:" or "- item"
-    const keyRegex = /^(\s*)([\w\-\s"]+:\s*.*| -\s+.*)$/;
-
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        if (line.trim() === '' || line.trim().startsWith('#')) continue;
-
-        const match = line.match(keyRegex);
-        if (match) {
-            startLineIndex = i;
-            baseIndent = match[1].length;
-            break;
-        }
-    }
-
-    if (startLineIndex === -1) return null;
-
-    const resultLines = [];
-    for (let i = startLineIndex; i < lines.length; i++) {
-        const line = lines[i];
-        if (line.trim() === '') {
-            resultLines.push(line);
-            continue;
-        }
-
-        const currentIndent = line.search(/\S|$/);
-
-        if (currentIndent < baseIndent) {
-            break; // End of block (less indented)
-        }
-
-        if (currentIndent === baseIndent) {
-            // At base level, must continue to match structure
-            if (!line.match(keyRegex)) {
-                break; // Stop if we hit a non-key/non-item line at base level
-            }
-        }
-
-        resultLines.push(line);
-    }
-
-    return resultLines.join('\n').trim();
-}
-
-/**
  * Extracts XML from mixed text
  * @param {string} text - Text containing XML
  * @returns {string|null} Extracted XML string or null

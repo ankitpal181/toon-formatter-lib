@@ -9,31 +9,30 @@
  * @module toon-converter
  */
 
-import { jsonToToon, toonToJson, jsonTextToToon } from './json.js';
-import { yamlToToon, toonToYaml } from './yaml.js';
-import { xmlToToon, toonToXml, xmlTextToToon } from './xml.js';
-import { csvToToon, csvToToonSync, toonToCsv, csvTextToToon, csvTextToToonSync } from './csv.js';
-import { validateToonString } from './validator.js';
+import { jsonToToonSync, jsonToToon, toonToJsonSync, toonToJson } from './json.js';
+import { yamlToToonSync, yamlToToon, toonToYamlSync, toonToYaml } from './yaml.js';
+import { xmlToToonSync, xmlToToon, toonToXmlSync, toonToXml } from './xml.js';
+import { csvToToonSync, csvToToon, toonToCsvSync, toonToCsv } from './csv.js';
+import { validateToonString, validateToonStringSync } from './validator.js';
 import {
     encodeXmlReservedChars,
     splitByDelimiter,
     parseValue,
     formatValue,
     extractJsonFromString,
-    extractYamlFromString,
     extractXmlFromString,
     extractCsvFromString
 } from './utils.js';
 
 // Exports
 export {
-    jsonToToon, toonToJson, jsonTextToToon,
-    yamlToToon, toonToYaml,
-    xmlToToon, toonToXml, xmlTextToToon,
-    csvToToon, csvToToonSync, toonToCsv, csvTextToToon, csvTextToToonSync,
-    validateToonString,
+    jsonToToonSync, jsonToToon, toonToJsonSync, toonToJson,
+    yamlToToonSync, yamlToToon, toonToYamlSync, toonToYaml,
+    xmlToToonSync, xmlToToon, toonToXmlSync, toonToXml,
+    csvToToonSync, csvToToon, toonToCsvSync, toonToCsv,
+    validateToonString, validateToonStringSync,
     encodeXmlReservedChars, splitByDelimiter, parseValue, formatValue,
-    extractJsonFromString, extractYamlFromString, extractXmlFromString, extractCsvFromString
+    extractJsonFromString, extractXmlFromString, extractCsvFromString
 };
 
 /**
@@ -41,39 +40,84 @@ export {
  */
 export class ToonConverter {
     /**
-     * Convert JSON to TOON
+     * Convert JSON to TOON (Sync)
      * @param {*} jsonData - JSON data (object, array, or primitive)
      * @returns {string} TOON formatted string
      */
     static fromJson(jsonData) {
+        return jsonToToonSync(jsonData);
+    }
+
+    /**
+     * Convert JSON to TOON (Async)
+     * @param {*} jsonData - JSON data
+     * @returns {Promise<string>} TOON formatted string
+     */
+    static async fromJsonAsync(jsonData) {
         return jsonToToon(jsonData);
     }
 
     /**
-     * Convert TOON to JSON
+     * Convert TOON to JSON (Sync)
      * @param {string} toonString - TOON formatted string
      * @returns {*} Parsed JSON data
      */
     static toJson(toonString) {
+        return toonToJsonSync(toonString);
+    }
+
+    /**
+     * Convert TOON to JSON (Async)
+     * @param {string} toonString - TOON formatted string
+     * @returns {Promise<*>} Parsed JSON data
+     */
+    static async toJsonAsync(toonString) {
         return toonToJson(toonString);
     }
 
     /**
-     * Convert YAML to TOON
+     * Convert YAML to TOON (Sync)
      * @param {string} yamlString - YAML formatted string
      * @returns {string} TOON formatted string
      */
     static fromYaml(yamlString) {
+        return yamlToToonSync(yamlString);
+    }
+
+    /**
+     * Convert YAML to TOON (Async)
+     * @param {string} yamlString - YAML formatted string
+     * @returns {Promise<string>} TOON formatted string
+     */
+    static async fromYamlAsync(yamlString) {
         return yamlToToon(yamlString);
     }
 
     /**
-     * Convert TOON to YAML
+     * Convert TOON to YAML (Sync)
      * @param {string} toonString - TOON formatted string
      * @returns {string} YAML formatted string
      */
     static toYaml(toonString) {
+        return toonToYamlSync(toonString);
+    }
+
+    /**
+     * Convert TOON to YAML (Async)
+     * @param {string} toonString - TOON formatted string
+     * @returns {Promise<string>} YAML formatted string
+     */
+    static async toYamlAsync(toonString) {
         return toonToYaml(toonString);
+    }
+
+    /**
+     * Convert XML to TOON (Sync)
+     * @param {string} xmlString - XML formatted string
+     * @returns {string} TOON formatted string
+     */
+    static fromXml(xmlString) {
+        return xmlToToonSync(xmlString);
     }
 
     /**
@@ -81,16 +125,25 @@ export class ToonConverter {
      * @param {string} xmlString - XML formatted string
      * @returns {Promise<string>} TOON formatted string
      */
-    static async fromXml(xmlString) {
+    static async fromXmlAsync(xmlString) {
         return xmlToToon(xmlString);
     }
 
     /**
-     * Convert TOON to XML
+     * Convert TOON to XML (Sync)
      * @param {string} toonString - TOON formatted string
      * @returns {string} XML formatted string
      */
     static toXml(toonString) {
+        return toonToXmlSync(toonString);
+    }
+
+    /**
+     * Convert TOON to XML (Async)
+     * @param {string} toonString - TOON formatted string
+     * @returns {Promise<string>} XML formatted string
+     */
+    static async toXmlAsync(toonString) {
         return toonToXml(toonString);
     }
 
@@ -99,7 +152,7 @@ export class ToonConverter {
      * @param {string} csvString - CSV formatted string
      * @returns {Promise<string>} TOON formatted string
      */
-    static async fromCsv(csvString) {
+    static async fromCsvAsync(csvString) {
         return csvToToon(csvString);
     }
 
@@ -108,16 +161,25 @@ export class ToonConverter {
      * @param {string} csvString - CSV formatted string
      * @returns {string} TOON formatted string
      */
-    static fromCsvSync(csvString) {
+    static fromCsv(csvString) {
         return csvToToonSync(csvString);
     }
 
     /**
-     * Convert TOON to CSV
+     * Convert TOON to CSV (Sync)
      * @param {string} toonString - TOON formatted string
      * @returns {string} CSV formatted string
      */
     static toCsv(toonString) {
+        return toonToCsvSync(toonString);
+    }
+
+    /**
+     * Convert TOON to CSV (Async)
+     * @param {string} toonString - TOON formatted string
+     * @returns {Promise<string>} CSV formatted string
+     */
+    static async toCsvAsync(toonString) {
         return toonToCsv(toonString);
     }
 
@@ -127,6 +189,15 @@ export class ToonConverter {
      * @returns {{isValid: boolean, error: string|null}} Validation result
      */
     static validate(toonString) {
+        return validateToonStringSync(toonString);
+    }
+
+    /**
+     * Validate a TOON string (Async)
+     * @param {string} toonString - TOON formatted string
+     * @returns {{isValid: boolean, error: string|null}} Validation result
+     */
+    static async validateAsync(toonString) {
         return validateToonString(toonString);
     }
 }

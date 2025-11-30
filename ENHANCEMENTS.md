@@ -32,34 +32,29 @@ Added utilities to extract specific formats from mixed text:
 
 ---
 
-### 3. **Mixed Text Conversion Functions**
-New functions that extract and convert all instances of a format from mixed text:
+### 3. **Integrated Mixed Text Conversion**
+The conversion functions now automatically detect and handle mixed text input using an extraction loop. This logic covers both embedded data and full data strings.
 
-#### JSON (`src/json.js`)
-```javascript
-jsonTextToToon(text)
-```
-- Extracts all JSON objects/arrays from text
-- Converts each to TOON format
-- Replaces in original text
-- Loops until no more JSON found (max 100 iterations)
+**Synchronous API (Main Logic)**:
+- `jsonToToonSync(input)`
+- `xmlToToonSync(input)`
+- `csvToToonSync(input)`
+- `yamlToToonSync(input)`
 
-#### XML (`src/xml.js`)
-```javascript
-xmlTextToToon(text)  // async
-```
-- Extracts all XML elements from text
-- Converts each to TOON format
-- Handles nested/multiple XML blocks
+**Asynchronous API (Wrappers)**:
+- `jsonToToon(input)`
+- `xmlToToon(input)`
+- `csvToToon(input)`
+- `yamlToToon(input)`
 
-#### CSV (`src/csv.js`)
-```javascript
-csvTextToToon(text)      // async
-csvTextToToonSync(text)  // sync
-```
-- Extracts CSV data from text
-- Converts to TOON format
-- Both async and sync versions available
+**Behavior**:
+1. Checks if input is a string.
+2. Uses extraction logic (`extract*FromString`) in a loop to find and convert all data blocks.
+3. If no blocks are found (and input is not valid data), it returns the original text (or throws if strict parsing fails inside the loop).
+
+**Note**: `*TextToToon` functions have been removed in favor of this integrated approach.
+
+---
 
 ---
 
@@ -78,104 +73,36 @@ All `toonTo*` functions now validate TOON input before conversion:
 
 ---
 
-### 5. **Improved JSON Conversion**
-- **Root Depth Handling**: Fixed depth calculation for root-level objects
-- **Validation Integration**: Calls `validateToonString()` before TOON→JSON
+### 6. **API Consistency (Sync & Async)**
+All converters now support both Synchronous and Asynchronous operations for consistency.
 
----
+| Format | Sync Method | Async Method |
+|--------|-------------|--------------|
+| **JSON** | `jsonToToon` | `jsonToToonAsync` |
+| **YAML** | `yamlToToon` | `yamlToToonAsync` |
+| **XML** | `xmlToToonSync`* | `xmlToToon` |
+| **CSV** | `csvToToonSync` | `csvToToon` |
 
-## 📦 Updated Exports
+*\*Note: `xmlToToonSync` in Node.js requires a global `DOMParser` polyfill (e.g., via `jsdom`).*
 
-### New Exports in `src/index.js`:
+### 7. **Unified Class API** (`ToonConverter`)
+The `ToonConverter` class now exposes all variations:
+
 ```javascript
-// Text conversion functions
-export { jsonTextToToon, xmlTextToToon, csvTextToToon, csvTextToToonSync };
+// Async
+await ToonConverter.fromJsonAsync(data);
+await ToonConverter.fromXmlAsync(xml);
+await ToonConverter.fromCsvAsync(csv);
 
-// Extraction utilities
-export { 
-    extractJsonFromString, 
-    extractYamlFromString, 
-    extractXmlFromString, 
-    extractCsvFromString 
-};
+// Sync
+ToonConverter.fromJson(data);
+ToonConverter.fromXmlSync(xml);
+ToonConverter.fromCsvSync(csv);
+
+// Mixed Text
+ToonConverter.fromJsonText(text);
+await ToonConverter.fromXmlText(text);
 ```
-
----
-
-## 🔧 Usage Examples
-
-### Mixed Text JSON Conversion
-```javascript
-import { jsonTextToToon } from 'toon-converter';
-
-const mixedText = `
-Here's some data:
-{"name": "Alice", "age": 30}
-
-And more data:
-{"city": "NYC", "country": "USA"}
-`;
-
-const result = jsonTextToToon(mixedText);
-// Converts all JSON objects to TOON in place
-```
-
-### Validation Before Conversion
-```javascript
-import { toonToJson } from 'toon-converter';
-
-try {
-    const json = toonToJson(toonString);
-} catch (error) {
-    console.error(error.message);
-    // "Invalid TOON: L5: Array size mismatch..."
-}
-```
-
-### Format Extraction
-```javascript
-import { extractJsonFromString } from 'toon-converter';
-
-const text = "Some text {\"key\": \"value\"} more text";
-const json = extractJsonFromString(text);
-// Returns: '{"key": "value"}'
-```
-
----
-
-## 🧪 Testing
-
-All existing tests pass with the new enhancements:
-- ✅ 23/23 tests passing
-- ✅ JSON, YAML, XML, CSV converters
-- ✅ Validator with enhanced checks
-- ✅ Round-trip conversions
-- ✅ Edge cases
-
----
-
-## 📋 Files Modified
-
-| File | Changes |
-|------|---------|
-| `src/validator.js` | Enhanced validation logic |
-| `src/utils.js` | Added 4 extraction functions |
-| `src/json.js` | Added `jsonTextToToon`, validation, depth fix |
-| `src/yaml.js` | Added validation to `toonToYaml` |
-| `src/xml.js` | Added `xmlTextToToon`, validation |
-| `src/csv.js` | Added `csvTextToToon` (async/sync), validation |
-| `src/index.js` | Updated exports for new functions |
-
----
-
-## 🎯 Key Improvements Summary
-
-1. **✅ Enhanced Validator**: Stricter validation with better error messages
-2. **✅ Mixed Text Support**: Extract and convert formats from any text
-3. **✅ Loop Conversion**: Process multiple instances automatically
-4. **✅ Validation Checks**: All reverse conversions validate input
-5. **✅ Better Error Handling**: Clear, actionable error messages
-6. **✅ Extraction Utilities**: Reusable format detection functions
 
 ---
 
@@ -183,6 +110,7 @@ All existing tests pass with the new enhancements:
 
 - **Robustness**: Validation prevents invalid conversions
 - **Flexibility**: Handle mixed content seamlessly
+- **Consistency**: Unified API for all formats
 - **Developer Experience**: Clear errors, easy debugging
 - **Reliability**: Comprehensive validation at every step
 - **Reusability**: Extraction functions available for custom use
