@@ -24,7 +24,6 @@ L5: Array declared with size 3 but has no items (expected indented block).
 Added utilities to extract specific formats from mixed text:
 
 - `extractJsonFromString(text)` - Finds and extracts JSON objects/arrays
-- `extractYamlFromString(text)` - Extracts YAML blocks
 - `extractXmlFromString(text)` - Extracts XML elements with balance checking
 - `extractCsvFromString(text)` - Identifies CSV data
 
