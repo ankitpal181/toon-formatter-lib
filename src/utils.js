@@ -232,5 +232,12 @@ export function extractCsvFromString(text) {
         resultLines.push(line);
     }
 
-    return resultLines.join('\n').trim();
+    const result = resultLines.join('\n').trim();
+
+    // Avoid matching TOON arrays (e.g. users[2]{id,name}:)
+    if (/^\s*(\w+)?\[\d+\]/.test(result)) {
+        return null;
+    }
+
+    return result;
 }
