@@ -1,8 +1,13 @@
 # 🚀 TOON Converter
 
-A lightweight, zero-dependency* library to convert between **TOON** (Token-Oriented Object Notation) and popular data formats (JSON, YAML, XML, CSV).
+A lightweight library to convert between **TOON** (Token-Oriented Object Notation) and popular data formats (JSON, YAML, XML, CSV).
 
 **Reduce your LLM token costs by up to 40%** using the TOON format!
+
+- **Documentation**: https://toonformatter.net/docs.html?package=toon-formatter
+- **Source Code**: https://github.com/ankitpal181/toon-formatter-lib
+- **Bug Reports**: https://github.com/ankitpal181/toon-formatter-lib/issues
+- **POC Tool**: https://toonformatter.net/
 
 \* *Only external dependencies: `js-yaml` and `papaparse` for YAML and CSV parsing*
 
