@@ -1,0 +1,35 @@
+# Test files
+test/
+*.test.js
+
+# Development files
+.git/
+.github/
+.gitignore
+.npmignore
+
+# Documentation (internal)
+RELEASE_NOTES*.md
+ARCHITECTURE*.md
+ENCRYPTION_DOCS*.md
+ENCRYPTION_IMPLEMENTATION*.md
+ENCRYPTION_PLAN*.md
+PYTHON_VS*.md
+QUICK_REFERENCE.md
+ENHANCEMENTS.md
+
+# Build artifacts
+node_modules/
+*.log
+*.tmp
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

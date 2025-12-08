@@ -120,10 +120,11 @@ export async function jsonToToon(data) {
 /**
  * Converts TOON to JSON format (Synchronous)
  * @param {string} toonString - TOON formatted string
- * @returns {Object} JSON object
+ * @param {boolean} [returnJson=false] - If true, returns JSON string; if false, returns object
+ * @returns {Object|string} JSON object or JSON string
  * @throws {Error} If TOON string is invalid
  */
-export function toonToJsonSync(toonString) {
+export function toonToJsonSync(toonString, returnJson = false) {
     // Validate TOON string before conversion
     const validationStatus = validateToonStringSync(toonString);
     if (!validationStatus.isValid) {
@@ -136,7 +137,7 @@ export function toonToJsonSync(toonString) {
 
     // Pre-process: Check for Root Array or Root Primitive
     const firstLine = lines.find(l => l.trim() !== '');
-    if (!firstLine) return {}; // Empty document
+    if (!firstLine) return returnJson ? '{}' : {}; // Empty document
 
     // Root Array detection: [N]... at start of line
     if (firstLine.trim().startsWith('[')) {
@@ -324,14 +325,15 @@ export function toonToJsonSync(toonString) {
         }
     }
 
-    return root;
+    return returnJson ? JSON.stringify(root) : root;
 }
 
 /**
  * Converts TOON to JSON format (Async)
  * @param {string} toonString - TOON formatted string
- * @returns {Promise<Object>} Parsed JSON data
+ * @param {boolean} [returnJson=false] - If true, returns JSON string; if false, returns object
+ * @returns {Promise<Object|string>} Parsed JSON data (object or string)
  */
-export async function toonToJson(toonString) {
-    return toonToJsonSync(toonString);
+export async function toonToJson(toonString, returnJson = false) {
+    return toonToJsonSync(toonString, returnJson);
 }

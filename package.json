@@ -1,11 +1,11 @@
 {
     "name": "toon-formatter",
-    "version": "1.1.1",
+    "version": "2.0.0",
     "funding": {
         "type": "github",
         "url": "https://github.com/sponsors/ankitpal181"
     },
-    "description": "A lightweight library to convert between TOON (Token-Oriented Object Notation) and popular data formats (JSON, YAML, XML, CSV). Reduce LLM token costs by up to 40%.",
+    "description": "A lightweight library to convert between TOON (Token-Oriented Object Notation) and popular data formats (JSON, YAML, XML, CSV) with end-to-end encryption support. Reduce LLM token costs by up to 40%.",
     "main": "src/index.js",
     "type": "module",
     "scripts": {
@@ -24,7 +24,13 @@
         "optimization",
         "data-format",
         "serialization",
-        "formatter"
+        "formatter",
+        "encryption",
+        "aes-256-gcm",
+        "security",
+        "crypto",
+        "secure-data",
+        "end-to-end-encryption"
     ],
     "author": "Ankit Pal",
     "license": "MIT",
@@ -53,6 +59,7 @@
         "./xml": "./src/xml.js",
         "./csv": "./src/csv.js",
         "./validator": "./src/validator.js",
-        "./utils": "./src/utils.js"
+        "./utils": "./src/utils.js",
+        "./encryptor": "./src/encryptor.js"
     }
 }
