@@ -1086,6 +1086,152 @@ ToonConverter.toJsonAsync(toonString, returnJson?)
 
 ---
 
+### Unified Format Converters (v2.0.0+)
+
+The library now includes specialized, unified converters for each major format. These are perfect when you need to convert between non-TOON formats (like XML to JSON or CSV to YAML) while still having access to TOON and encryption features.
+
+#### Available Unified Converters:
+- `JsonConverter`: Specialized in JSON input/output
+- `YamlConverter`: Specialized in YAML input/output
+- `XmlConverter`: Specialized in XML input/output
+- `CsvConverter`: Specialized in CSV input/output
+
+#### Example: Cross-Format Conversion
+```javascript
+import { XmlConverter, YamlConverter } from 'toon-formatter';
+
+// Convert XML directly to YAML
+const xmlData = '<user><name>Alice</name></user>';
+const yamlData = XmlConverter.toYaml(xmlData);
+
+// Convert YAML directly to CSV
+const csvData = YamlConverter.toCsv("name: Alice\nrole: admin");
+```
+
+---
+
+### JsonConverter Class
+
+Specialized for JSON-centric workflows. It can convert JSON to any format and any format back to JSON.
+
+#### Instance Methods (with Encryption)
+```javascript
+import { JsonConverter, Encryptor } from 'toon-formatter';
+
+const converter = new JsonConverter(new Encryptor(key, 'aes-256-gcm'));
+
+// JSON -> TOON (Encrypted)
+const encryptedToon = converter.toToon(data, { conversionMode: 'export' });
+
+// XML -> JSON (Decrypted)
+const jsonData = converter.fromXml(encryptedXml, { conversionMode: 'ingestion' });
+```
+
+#### Static Methods (No Encryption)
+```javascript
+// Convert TOON to JSON object
+const obj = JsonConverter.fromToon(toonString);
+
+// Convert TOON to JSON string
+const json = JsonConverter.fromToon(toonString, { returnJson: true });
+
+// Convert JSON to XML
+const xml = JsonConverter.toXml({ name: "Alice" });
+```
+
+**Available Methods:**
+- `fromToon(toonString, options?)` / `fromToonAsync(toonString, options?)`
+- `toToon(data, options?)` / `toToonAsync(data, options?)`
+- `fromYaml(yamlString, options?)` / `fromYamlAsync(yamlString, options?)`
+- `toYaml(data, options?)` / `toYamlAsync(data, options?)`
+- `fromXml(xmlString, options?)` / `fromXmlAsync(xmlString, options?)`
+- `toXml(data, options?)` / `toXmlAsync(data, options?)`
+- `fromCsv(csvString, options?)` / `fromCsvAsync(csvString, options?)`
+- `toCsv(data, options?)` / `toCsvAsync(data, options?)`
+
+---
+
+### YamlConverter Class
+
+Specialized for YAML workflows.
+
+#### Usage Example
+```javascript
+import { YamlConverter } from 'toon-formatter';
+
+// YAML to TOON
+const toon = YamlConverter.fromToon(testToon);
+
+// YAML to JSON
+const json = YamlConverter.toJson(yamlString, { returnJson: true });
+```
+
+**Available Methods:**
+- `fromToon(toonString, options?)` / `fromToonAsync(toonString, options?)`
+- `toToon(yamlString, options?)` / `toToonAsync(yamlString, options?)`
+- `fromJson(jsonData, options?)` / `fromJsonAsync(jsonData, options?)`
+- `toJson(yamlString, options?)` / `toJsonAsync(yamlString, options?)`
+- `fromXml(xmlString, options?)` / `fromXmlAsync(xmlString, options?)`
+- `toXml(yamlString, options?)` / `toXmlAsync(yamlString, options?)`
+- `fromCsv(csvString, options?)` / `fromCsvAsync(csvString, options?)`
+- `toCsv(yamlString, options?)` / `toCsvAsync(yamlString, options?)`
+
+---
+
+### XmlConverter Class
+
+Specialized for XML workflows. Supports mixed-text extraction automatically.
+
+#### Usage Example
+```javascript
+import { XmlConverter } from 'toon-formatter';
+
+// XML to TOON
+const toon = XmlConverter.fromToon(xmlString);
+
+// JSON to XML
+const xml = XmlConverter.fromJson(jsonData);
+```
+
+**Available Methods:**
+- `fromToon(toonString, options?)` / `fromToonAsync(toonString, options?)`
+- `toToon(xmlString, options?)` / `toToonAsync(xmlString, options?)`
+- `fromJson(jsonData, options?)` / `fromJsonAsync(jsonData, options?)`
+- `toJson(xmlString, options?)` / `toJsonAsync(xmlString, options?)`
+- `fromYaml(yamlString, options?)` / `fromYamlAsync(yamlString, options?)`
+- `toYaml(xmlString, options?)` / `toYamlAsync(xmlString, options?)`
+- `fromCsv(csvString, options?)` / `fromCsvAsync(csvString, options?)`
+- `toCsv(xmlString, options?)` / `toCsvAsync(xmlString, options?)`
+
+---
+
+### CsvConverter Class
+
+Specialized for CSV workflows.
+
+#### Usage Example
+```javascript
+import { CsvConverter } from 'toon-formatter';
+
+// CSV to TOON
+const toon = CsvConverter.fromToon(csvString);
+
+// JSON to CSV
+const csv = CsvConverter.fromJson(jsonData);
+```
+
+**Available Methods:**
+- `fromToon(toonString, options?)` / `fromToonAsync(toonString, options?)`
+- `toToon(csvString, options?)` / `toToonAsync(csvString, options?)`
+- `fromJson(jsonData, options?)` / `fromJsonAsync(jsonData, options?)`
+- `toJson(csvString, options?)` / `toJsonAsync(csvString, options?)`
+- `fromYaml(yamlString, options?)` / `fromYamlAsync(yamlString, options?)`
+- `toYaml(csvString, options?)` / `toYamlAsync(csvString, options?)`
+- `fromXml(xmlString, options?)` / `fromXmlAsync(xmlString, options?)`
+- `toXml(csvString, options?)` / `toXmlAsync(csvString, options?)`
+
+---
+
 ## 🎨 TOON Format Guide
 
 ### Primitives

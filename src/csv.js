@@ -4,38 +4,7 @@
 
 import Papa from 'papaparse';
 import { jsonToToonSync, toonToJsonSync } from './json.js';
-import { extractCsvFromString } from './utils.js';
-
-/**
- * Internal core function to convert pure CSV string to TOON (Async)
- * @param {string} csvString 
- * @returns {Promise<string>}
- */
-function parseCsvToToon(csvString) {
-    return new Promise((resolve, reject) => {
-        Papa.parse(csvString, {
-            header: true,
-            dynamicTyping: true,
-            complete: function (results) {
-                try {
-                    const jsonObject = results.data;
-
-                    if (typeof jsonObject !== "object" || jsonObject === null) {
-                        throw new Error("CSV parsing failed — cannot convert.");
-                    }
-
-                    const toonString = jsonToToonSync(jsonObject);
-                    resolve(toonString);
-                } catch (error) {
-                    reject(error);
-                }
-            },
-            error: function (error) {
-                reject(new Error(`CSV parsing error: ${error.message}`));
-            }
-        });
-    });
-}
+import { extractCsvFromString, flattenObject } from './utils.js';
 
 /**
  * Internal core function to convert pure CSV string to TOON (Sync)
@@ -46,6 +15,7 @@ function parseCsvToToonSync(csvString) {
     const results = Papa.parse(csvString, {
         header: true,
         dynamicTyping: true,
+        skipEmptyLines: true,
     });
 
     if (results.errors && results.errors.length > 0) {
@@ -62,20 +32,9 @@ function parseCsvToToonSync(csvString) {
 }
 
 /**
- * Converts CSV (or mixed text with CSV) to TOON format (Async)
- * @param {string} csvString - CSV formatted string or mixed text
- * @returns {Promise<string>} TOON formatted string
- * @throws {Error} If CSV is invalid
- */
-export async function csvToToon(csvString) {
-    return csvToToonSync(csvString);
-}
-
-/**
- * Converts CSV (or mixed text with CSV) to TOON format (synchronous version)
+ * Converts CSV (or mixed text with CSV) to TOON format (Sync)
  * @param {string} csvString - CSV formatted string or mixed text
  * @returns {string} TOON formatted string
- * @throws {Error} If CSV is invalid
  */
 export function csvToToonSync(csvString) {
     if (!csvString || typeof csvString !== 'string') {
@@ -104,10 +63,18 @@ export function csvToToonSync(csvString) {
 }
 
 /**
- * Converts TOON to CSV format (Synchronous)
+ * Converts CSV (or mixed text with CSV) to TOON format (Async)
+ * @param {string} csvString - CSV formatted string or mixed text
+ * @returns {Promise<string>} TOON formatted string
+ */
+export async function csvToToon(csvString) {
+    return csvToToonSync(csvString);
+}
+
+/**
+ * Converts TOON to CSV format (Sync)
  * @param {string} toonString - TOON formatted string
  * @returns {string} CSV formatted string
- * @throws {Error} If TOON is invalid
  */
 export function toonToCsvSync(toonString) {
     if (!toonString || typeof toonString !== 'string') {
@@ -116,12 +83,14 @@ export function toonToCsvSync(toonString) {
 
     const jsonObject = toonToJsonSync(toonString);
 
-    const csvString = Papa.unparse(jsonObject, {
-        header: true,
-        dynamicTyping: true,
-    });
+    // Flatten the object for CSV
+    const dataToUnparse = Array.isArray(jsonObject)
+        ? jsonObject.map(row => flattenObject(row))
+        : [flattenObject(jsonObject)];
 
-    return csvString;
+    return Papa.unparse(dataToUnparse, {
+        header: true,
+    });
 }
 
 /**

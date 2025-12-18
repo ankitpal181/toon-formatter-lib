@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - 2025-12-18
+
+### Added
+- **🔄 Unified Format Converters**
+  - New classes: `JsonConverter`, `YamlConverter`, `XmlConverter`, and `CsvConverter`
+  - Direct translation between formats (e.g., XML ↔ JSON, CSV ↔ YAML)
+  - Full encryption middleware support for all unified converters
+  - Static and Instance API parity across all converters
+- **📝 Enhanced Mixed-Text Support**
+  - Standardized mixed-text extraction for JSON, XML, and CSV
+  - Preserves surrounding text while converting embedded data blocks
+- **📦 Improved Packaging**
+  - Specific exports for all converters in `package.json`
+  - Fixed Node.js XML support by moving `xmldom` to production dependencies
+- **📚 Documentation Hub**
+  - Comprehensive README updates with Unified Converter examples
+  - New `toon-formatter.json` documentation for the web platform
+
+### Changed
+- Standardized `returnJson` default to `false` (returns objects/arrays) for consistency
+- Refined internal conversion logic to better handle edge cases in mixed-text scenarios
+- Improved package keywords and description for better SEO
+
 ## [2.0.0] - 2025-12-08
 
 ### Added
@@ -65,6 +88,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Migration Guide
 
+### From v2.0 to v2.1
+
+**To use Unified Converters:**
+
+```javascript
+import { JsonConverter, XmlConverter } from 'toon-formatter';
+
+// Direct format-to-format
+const xml = JsonConverter.toXml({ name: 'Alice' });
+
+// With encryption
+const converter = new JsonConverter(encryptor);
+const encryptedXml = converter.toXml({ name: 'Alice' }, { conversionMode: 'export' });
+```
+
 ### From v1.x to v2.0
 
 **No changes required!** Version 2.0 is fully backward compatible.
@@ -73,7 +111,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ```javascript
 // Old code (still works)
-import { ToonConverter } from 'toon-formatter';
+import ToonConverter from 'toon-formatter';
 const toon = ToonConverter.fromJson(data);
 
 // New code (with encryption)

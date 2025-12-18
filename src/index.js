@@ -24,6 +24,10 @@ import {
     extractCsvFromString
 } from './utils.js';
 import { Encryptor } from './encryptor.js';
+import { JsonConverter } from './json_formatter/index.js';
+import { YamlConverter } from './yaml_formatter/index.js';
+import { XmlConverter } from './xml_formatter/index.js';
+import { CsvConverter } from './csv_formatter/index.js';
 
 // Exports
 export {
@@ -34,7 +38,11 @@ export {
     validateToonString, validateToonStringSync,
     encodeXmlReservedChars, splitByDelimiter, parseValue, formatValue,
     extractJsonFromString, extractXmlFromString, extractCsvFromString,
-    Encryptor
+    Encryptor,
+    JsonConverter,
+    YamlConverter,
+    XmlConverter,
+    CsvConverter
 };
 
 /**

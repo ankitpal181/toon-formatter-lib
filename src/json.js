@@ -6,43 +6,22 @@ import { formatValue, parseValue, splitByDelimiter, extractJsonFromString } from
 import { validateToonStringSync } from './validator.js';
 
 /**
- * Converts JSON to TOON format (Synchronous)
- * @param {*} data - JSON data to convert
- * @param {string} key - Current key name (for recursion)
- * @param {number} depth - Current indentation depth
- * @returns {string} TOON formatted string
+ * Internal core parser for JSON to TOON conversion.
+ * @param {*} data 
+ * @param {string} key 
+ * @param {number} depth 
+ * @returns {string}
  */
-export function jsonToToonSync(data, key = '', depth = 0) {
-    // Handle String Input (Potential JSON string or Mixed Text)
-    if (typeof data === 'string' && key === '' && depth === 0) {
-        let convertedText = data;
-        let iterationCount = 0;
-        const maxIterations = 100;
-
-        while (iterationCount < maxIterations) {
-            const jsonString = extractJsonFromString(convertedText);
-            if (!jsonString) break;
-
-            try {
-                const jsonObject = JSON.parse(jsonString);
-                // Recursively call jsonToToonSync with the object
-                const toonString = jsonToToonSync(jsonObject);
-                const toonOutput = toonString.trim();
-                convertedText = convertedText.replace(jsonString, toonOutput);
-                iterationCount++;
-            } catch (e) {
-                break;
-            }
-        }
-        return convertedText;
-    }
-
+function jsonToToonParser(data, key = '', depth = 0) {
     const indent = '  '.repeat(depth);
     const nextIndent = '  '.repeat(depth + 1);
 
     // ---- Primitive ----
     if (data === null || typeof data !== 'object') {
-        return `${indent}${key}: ${formatValue(data)}`;
+        if (key) {
+            return `${indent}${key}: ${formatValue(data)}`;
+        }
+        return `${indent}${formatValue(data)}`;
     }
 
     // ---- Array ----
@@ -61,37 +40,75 @@ export function jsonToToonSync(data, key = '', depth = 0) {
         }
 
         // ---- Array of objects ----
+        const firstItem = data[0];
+        if (typeof firstItem === 'object' && firstItem !== null && !Array.isArray(firstItem)) {
+            const fields = Object.keys(firstItem);
 
-        // Determine if all fields in object are primitives
-        const firstObj = data[0];
-        const fields = Object.keys(firstObj);
-        const isTabular = data.every(row =>
-            fields.every(f =>
-                row[f] === null ||
-                ['string', 'number', 'boolean'].includes(typeof row[f])
-            )
-        );
+            // Collect all potential fields from ALL rows to be sure, or just from first row
+            // To match Python, we check fields from first row
+            let isTabular = true;
+            for (const row of data) {
+                if (typeof row !== 'object' || row === null || Array.isArray(row)) {
+                    isTabular = false;
+                    break;
+                }
 
-        // ---- TABULAR ARRAY (structured array) ----
-        if (isTabular) {
-            const header = fields.join(',');
-            const lines = [];
-            lines.push(`${indent}${key}[${length}]{${header}}:`);
+                // If this row has more keys than the first row, it might not be tabular 
+                // but let's stick to Python logic: check if all values of 'fields' in this row are primitive
+                for (const f of fields) {
+                    const val = row[f];
+                    if (val !== null && typeof val === 'object') {
+                        isTabular = false;
+                        break;
+                    }
+                }
 
-            data.forEach(row => {
-                const rowVals = fields.map(f => formatValue(row[f]));
-                lines.push(`${nextIndent}${rowVals.join(',')}`);
-            });
+                // AND we should probably check if this row contains any extra non-primitive keys
+                if (isTabular) {
+                    for (const k in row) {
+                        if (!fields.includes(k) && typeof row[k] === 'object' && row[k] !== null) {
+                            isTabular = false;
+                            break;
+                        }
+                    }
+                }
 
-            return lines.join('\n');
+                if (!isTabular) break;
+            }
+
+            // ---- TABULAR ARRAY (structured array) ----
+            if (isTabular) {
+                const header = fields.join(',');
+                const lines = [];
+                lines.push(`${indent}${key}[${length}]{${header}}:`);
+
+                data.forEach(row => {
+                    const rowVals = fields.map(f => formatValue(row[f]));
+                    lines.push(`${nextIndent}${rowVals.join(',')}`);
+                });
+
+                return lines.join('\n');
+            }
         }
 
-        // ---- STANDARD ARRAY OF OBJECTS ----
+        // ---- YAML-STYLE ARRAY (nested objects or mixed types) ----
         const lines = [];
         lines.push(`${indent}${key}[${length}]:`);
-        data.forEach(item => {
-            lines.push(jsonToToonSync(item, '', depth + 1));
+
+        data.forEach(row => {
+            lines.push(`${nextIndent}-`); // item marker
+            if (typeof row === 'object' && row !== null && !Array.isArray(row)) {
+                for (const f in row) {
+                    lines.push(jsonToToonParser(row[f], f, depth + 2));
+                }
+            } else if (Array.isArray(row)) {
+                lines.push(jsonToToonParser(row, '', depth + 2));
+            } else {
+                // Primitive in array
+                lines.push(`${'  '.repeat(depth + 2)}${formatValue(row)}`);
+            }
         });
+
         return lines.join('\n');
     }
 
@@ -101,11 +118,51 @@ export function jsonToToonSync(data, key = '', depth = 0) {
         lines.push(`${indent}${key}:`);
     }
 
+    const childDepth = key ? depth + 1 : depth;
     Object.keys(data).forEach(k => {
-        lines.push(jsonToToonSync(data[k], k, key ? depth + 1 : depth));
+        lines.push(jsonToToonParser(data[k], k, childDepth));
     });
 
     return lines.join('\n');
+}
+
+/**
+ * Converts JSON to TOON format (Sync)
+ * @param {*} data - JSON data to convert
+ * @returns {string} TOON formatted string
+ */
+export function jsonToToonSync(data) {
+    // Handle String Input (Potential JSON string or Mixed Text)
+    if (typeof data === 'string') {
+        let convertedText = data;
+        let iterationCount = 0;
+        const maxIterations = 100;
+        let foundAnyJson = false;
+
+        while (iterationCount < maxIterations) {
+            const jsonString = extractJsonFromString(convertedText);
+            if (!jsonString) break;
+
+            foundAnyJson = true;
+            try {
+                const jsonObject = JSON.parse(jsonString);
+                const toonString = jsonToToonParser(jsonObject);
+                const toonOutput = toonString.trim();
+                convertedText = convertedText.replace(jsonString, toonOutput);
+                iterationCount++;
+            } catch (e) {
+                break;
+            }
+        }
+
+        if (!foundAnyJson) {
+            return jsonToToonParser(data);
+        }
+
+        return convertedText;
+    }
+
+    return jsonToToonParser(data);
 }
 
 /**
@@ -139,7 +196,7 @@ export function toonToJsonSync(toonString, returnJson = false) {
     const firstLine = lines.find(l => l.trim() !== '');
     if (!firstLine) return returnJson ? '{}' : {}; // Empty document
 
-    // Root Array detection: [N]... at start of line
+    // Root Array detection
     if (firstLine.trim().startsWith('[')) {
         root = [];
         stack.push({ obj: root, indent: 0, isRootArray: true });
@@ -229,7 +286,6 @@ export function toonToJsonSync(toonString, returnJson = false) {
                 const arrayMatch = content.match(/^\[(\d+)(.*?)\](?:\{(.*?)\})?:\s*(.*)$/);
 
                 if (arrayMatch) {
-                    const length = parseInt(arrayMatch[1], 10);
                     const delimChar = arrayMatch[2] || ',';
                     const delimiter = delimChar === '\\t' ? '\t' : (delimChar === '|' ? '|' : ',');
                     const fieldsStr = arrayMatch[3];
@@ -276,10 +332,8 @@ export function toonToJsonSync(toonString, returnJson = false) {
 
         // --- Key-Value or Array Header Handling ---
         const arrayHeaderMatch = trimmed.match(/^(.+?)\[(\d+)(.*?)\](?:\{(.*?)\})?:\s*(.*)$/);
-
         if (arrayHeaderMatch) {
             const key = arrayHeaderMatch[1].trim();
-            const length = parseInt(arrayHeaderMatch[2], 10);
             const delimChar = arrayHeaderMatch[3];
             const fieldsStr = arrayHeaderMatch[4];
             const valueStr = arrayHeaderMatch[5];
@@ -289,10 +343,7 @@ export function toonToJsonSync(toonString, returnJson = false) {
             else if (delimChar === '|') delimiter = '|';
 
             const newArray = [];
-
-            if (!Array.isArray(parent)) {
-                parent[key] = newArray;
-            }
+            parent[key] = newArray;
 
             if (fieldsStr) {
                 tabularHeaders = fieldsStr.split(',').map(s => s.trim());
@@ -308,7 +359,6 @@ export function toonToJsonSync(toonString, returnJson = false) {
             continue;
         }
 
-        // Standard Key-Value: key: value
         const kvMatch = trimmed.match(/^(.+?):\s*(.*)$/);
         if (kvMatch) {
             const key = kvMatch[1].trim();
@@ -332,7 +382,7 @@ export function toonToJsonSync(toonString, returnJson = false) {
  * Converts TOON to JSON format (Async)
  * @param {string} toonString - TOON formatted string
  * @param {boolean} [returnJson=false] - If true, returns JSON string; if false, returns object
- * @returns {Promise<Object|string>} Parsed JSON data (object or string)
+ * @returns {Promise<Object|string>} JSON object or JSON string
  */
 export async function toonToJson(toonString, returnJson = false) {
     return toonToJsonSync(toonString, returnJson);

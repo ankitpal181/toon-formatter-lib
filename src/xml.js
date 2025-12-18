@@ -4,7 +4,7 @@
  */
 
 import { jsonToToonSync, toonToJsonSync } from './json.js';
-import { encodeXmlReservedChars, extractXmlFromString } from './utils.js';
+import { encodeXmlReservedChars, extractXmlFromString, buildTag } from './utils.js';
 
 /**
  * Converts XML DOM to JSON object
@@ -31,6 +31,10 @@ function xmlToJsonObject(xml) {
         for (let i = 0; i < xml.childNodes.length; i++) {
             const item = xml.childNodes.item(i);
             const nodeName = item.nodeName;
+
+            // Skip comment nodes
+            if (item.nodeType === 8) continue;
+
             const childJson = xmlToJsonObject(item);
 
             if (childJson === undefined) continue;
@@ -38,8 +42,7 @@ function xmlToJsonObject(xml) {
             if (obj[nodeName] === undefined) {
                 obj[nodeName] = childJson;
             } else {
-                // Handle multiple children with the same tag name (create an array)
-                if (typeof obj[nodeName].push === "undefined") {
+                if (!Array.isArray(obj[nodeName])) {
                     const old = obj[nodeName];
                     obj[nodeName] = [];
                     obj[nodeName].push(old);
@@ -49,69 +52,13 @@ function xmlToJsonObject(xml) {
         }
     }
 
-    // Clean up: If the object only contains text and no attributes/children, return the text directly
-    if (Object.keys(obj).length === 1 && obj['#text'] !== undefined) {
+    // Special case: if object only has #text and no attributes/children, return text directly
+    const keys = Object.keys(obj);
+    if (keys.length === 1 && keys[0] === '#text' && !obj['@attributes']) {
         return obj['#text'];
     }
 
     return obj;
-}
-
-/**
- * Converts JSON object to XML string
- * @param {Object} obj - JSON object
- * @returns {string} XML string
- */
-function jsonObjectToXml(obj) {
-    let xml = '';
-
-    for (const key in obj) {
-        if (!obj.hasOwnProperty(key)) continue;
-
-        const value = obj[key];
-
-        if (key === "#text") {
-            // Handle text content directly
-            xml += value;
-        }
-        else if (key === '@attributes' && typeof value === 'object') {
-            // Handle attributes: Convert { "@attributes": { "id": "1" } } to id="1"
-            let attrString = '';
-            for (const attrKey in value) {
-                attrString += ` ${attrKey}="${value[attrKey]}"`;
-            }
-            xml += attrString;
-        }
-        else if (Array.isArray(value)) {
-            // Handle arrays: Loop and create a tag for each item
-            value.forEach(item => {
-                if (typeof item === 'object') {
-                    const innerContent = jsonObjectToXml(item);
-                    const attrMatch = innerContent.match(/^(\s+[^\s=]+="[^"]*")*/);
-                    const attrs = attrMatch ? attrMatch[0] : "";
-                    const body = innerContent.slice(attrs.length);
-
-                    xml += `<${key}${attrs}>${body}</${key}>`;
-                } else {
-                    xml += `<${key}>${item}</${key}>`;
-                }
-            });
-        }
-        else if (typeof value === 'object' && value !== null) {
-            // Handle nested objects: Recurse and wrap in the current key's tag
-            const innerContent = jsonObjectToXml(value);
-            const attrMatch = innerContent.match(/^(\s+[^\s=]+="[^"]*")*/);
-            const attrs = attrMatch ? attrMatch[0] : "";
-            const body = innerContent.slice(attrs.length);
-
-            xml += `<${key}${attrs}>${body}</${key}>`;
-        }
-        else if (value !== null && value !== undefined) {
-            // Handle primitive values: Create a simple tag
-            xml += `<${key}>${value}</${key}>`;
-        }
-    }
-    return xml;
 }
 
 /**
@@ -134,21 +81,17 @@ function parseXmlToToonSync(xmlString) {
         'application/xml'
     );
 
-    // Check for parser errors (works in both browser and xmldom)
-    if (xmlDoc.querySelector) {
-        // Browser environment
-        const parserError = xmlDoc.querySelector('parsererror');
-        if (parserError) {
-            throw new Error(parserError.textContent);
-        }
-    } else {
-        // xmldom environment - check documentElement
-        if (xmlDoc.documentElement && xmlDoc.documentElement.nodeName === 'parsererror') {
-            throw new Error(xmlDoc.documentElement.textContent || 'XML parsing error');
-        }
+    const parserError = xmlDoc.querySelector ? xmlDoc.querySelector('parsererror') :
+        (xmlDoc.documentElement && xmlDoc.documentElement.nodeName === 'parsererror' ? xmlDoc.documentElement : null);
+
+    if (parserError) {
+        throw new Error(parserError.textContent || 'XML parsing error');
     }
 
-    const jsonObject = xmlToJsonObject(xmlDoc);
+    const rootElement = xmlDoc.documentElement;
+    const jsonObject = {};
+    jsonObject[rootElement.nodeName] = xmlToJsonObject(rootElement);
+
     return jsonToToonSync(jsonObject);
 }
 
@@ -194,9 +137,7 @@ export async function xmlToToon(xmlString) {
         try {
             const { DOMParser: NodeDOMParser } = await import('xmldom');
             global.DOMParser = NodeDOMParser;
-        } catch (e) {
-            // Ignore if import fails, xmlToToonSync will throw appropriate error
-        }
+        } catch (e) { }
     }
     return xmlToToonSync(xmlString);
 }
@@ -213,7 +154,11 @@ export function toonToXmlSync(toonString) {
     }
 
     const jsonObject = toonToJsonSync(toonString);
-    return jsonObjectToXml(jsonObject);
+    let xml = "";
+    for (const k in jsonObject) {
+        xml += buildTag(k, jsonObject[k]);
+    }
+    return xml;
 }
 
 /**

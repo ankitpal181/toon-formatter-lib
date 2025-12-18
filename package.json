@@ -1,11 +1,11 @@
 {
     "name": "toon-formatter",
-    "version": "2.0.1",
+    "version": "2.1.1",
     "funding": {
         "type": "github",
         "url": "https://github.com/sponsors/ankitpal181"
     },
-    "description": "A lightweight library to convert between TOON (Token-Oriented Object Notation) and popular data formats (JSON, YAML, XML, CSV) with end-to-end encryption support. Reduce LLM token costs by up to 40%.",
+    "description": "A powerful library to convert between TOON, JSON, YAML, XML, and CSV with end-to-end encryption. Includes Unified Converters for direct format-to-format translation and LLM token optimization.",
     "main": "src/index.js",
     "type": "module",
     "scripts": {
@@ -30,7 +30,11 @@
         "security",
         "crypto",
         "secure-data",
-        "end-to-end-encryption"
+        "end-to-end-encryption",
+        "unified-converter",
+        "json-to-xml",
+        "csv-to-yaml",
+        "xml-to-json"
     ],
     "author": "Ankit Pal",
     "license": "MIT",
@@ -47,11 +51,10 @@
     },
     "dependencies": {
         "js-yaml": "^4.1.0",
-        "papaparse": "^5.4.1"
-    },
-    "devDependencies": {
+        "papaparse": "^5.4.1",
         "xmldom": "^0.6.0"
     },
+    "devDependencies": {},
     "exports": {
         ".": "./src/index.js",
         "./json": "./src/json.js",
@@ -60,6 +63,10 @@
         "./csv": "./src/csv.js",
         "./validator": "./src/validator.js",
         "./utils": "./src/utils.js",
-        "./encryptor": "./src/encryptor.js"
+        "./encryptor": "./src/encryptor.js",
+        "./json-converter": "./src/json_formatter/index.js",
+        "./yaml-converter": "./src/yaml_formatter/index.js",
+        "./xml-converter": "./src/xml_formatter/index.js",
+        "./csv-converter": "./src/csv_formatter/index.js"
     }
 }
