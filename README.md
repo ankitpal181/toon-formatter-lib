@@ -1,5 +1,9 @@
 # 🚀 TOON Converter
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node >=16.0.0](https://img.shields.io/badge/Node-%3E%3D16.0.0-blue.svg)](https://nodejs.org/en/download)
+[![LLM APIs cost reduction](https://img.shields.io/badge/LLM%20APIs-Up%20to%2040%25%20cost%20reduction-orange)]
+
 A lightweight library to convert between **TOON** (Token-Oriented Object Notation) and popular data formats (JSON, YAML, XML, CSV).
 
 **Reduce your LLM token costs by up to 40%** using the TOON format!
