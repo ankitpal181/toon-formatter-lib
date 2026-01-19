@@ -100,6 +100,18 @@ describe('YamlConverter', () => {
         assert.ok(yaml.includes('user: Alice'));
         assert.ok(yaml.includes('id: 123'));
     });
+
+    test('Instance with Encryption', () => {
+        const key = Encryptor.generateKey();
+        const encryptor = new Encryptor(key, 'aes-256-gcm');
+        const converter = new YamlConverter(encryptor);
+
+        const encryptedToon = converter.toToon(testYaml, { conversionMode: 'export' });
+        assert.ok(!encryptedToon.includes('user:'));
+
+        const decryptedYaml = converter.fromToon(encryptedToon, { conversionMode: 'ingestion' });
+        assert.ok(decryptedYaml.includes('user: Alice'));
+    });
 });
 
 describe('XmlConverter', () => {
@@ -118,6 +130,18 @@ describe('XmlConverter', () => {
         const xml = XmlConverter.fromYaml(testYaml);
         assert.ok(xml.includes('<user>Alice</user>'));
     });
+
+    test('Instance with Encryption', () => {
+        const key = Encryptor.generateKey();
+        const encryptor = new Encryptor(key, 'aes-256-gcm');
+        const converter = new XmlConverter(encryptor);
+
+        const encryptedToon = converter.toToon(testXml, { conversionMode: 'export' });
+        assert.ok(!encryptedToon.includes('user'));
+
+        const decryptedXml = converter.fromToon(encryptedToon, { conversionMode: 'ingestion' });
+        assert.ok(decryptedXml.includes('<user>Alice</user>'));
+    });
 });
 
 describe('CsvConverter', () => {
@@ -135,6 +159,18 @@ describe('CsvConverter', () => {
     test('Async Validation', async () => {
         const isValid = await CsvConverter.validateAsync(testCsv);
         assert.strictEqual(isValid, true);
+    });
+
+    test('Instance with Encryption', () => {
+        const key = Encryptor.generateKey();
+        const encryptor = new Encryptor(key, 'aes-256-gcm');
+        const converter = new CsvConverter(encryptor);
+
+        const encryptedToon = converter.toToon(testCsv, { conversionMode: 'export' });
+        assert.ok(!encryptedToon.includes('Alice'));
+
+        const decryptedCsv = converter.fromToon(encryptedToon, { conversionMode: 'ingestion' });
+        assert.ok(decryptedCsv.includes('Alice'));
     });
 });
 

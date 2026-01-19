@@ -59,6 +59,64 @@ users[3]{id,name,active}:
 
 ---
 
+## 💻 CLI Utility
+
+**NEW in v2.1.0**: TOON Formatter now includes a powerful CLI utility for fast data conversion directly from your terminal!
+
+### Global Installation
+To use the `toon-formatter` command anywhere:
+```bash
+npm install -g toon-formatter
+```
+Or run it instantly without installation using `npx`:
+```bash
+npx toon-formatter --help
+```
+
+### Basic Usage
+Convert files or piped data easily:
+```bash
+# Convert JSON file to TOON
+toon-formatter --from json --to toon -i data.json -o data.toon
+
+# Piping data (JSON -> TOON)
+echo '{"name": "Alice"}' | toon-formatter --from json --to toon
+
+# Convert XML to JSON (prettified by default)
+cat profile.xml | toon-formatter --from xml --to json
+```
+
+### Advanced Features
+The CLI supports all library features, including validation and encryption:
+
+```bash
+# Validate a TOON string
+cat data.toon | toon-formatter --validate toon
+
+# Encrypt data during conversion (XOR)
+echo '{"secret": "data"}' | toon-formatter --from json --to toon --mode export --key "mykey" --algo xor
+
+# Decrypt data (AES-256-GCM)
+cat encrypted.txt | toon-formatter --from toon --to json --mode ingestion --key "your-32-byte-key" --algo aes-256-gcm
+```
+
+### CLI Options
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--from` | `-f` | Input format (json, yaml, xml, csv, toon) |
+| `--to` | `-t` | Output format (json, yaml, xml, csv, toon) |
+| `--input` | `-i` | Input file path (defaults to stdin) |
+| `--output` | `-o` | Output file path (defaults to stdout) |
+| `--validate` | `-v` | Validate the input format and exit |
+| `--mode` | `-m` | Encryption mode (middleware, ingestion, export) |
+| `--key` | `-k` | Encryption key |
+| `--algo` | `-a` | Encryption algorithm (aes-256-gcm, xor, base64) |
+| `--async` | | Use asynchronous conversion mode |
+| `--no-parse` | | Skip parsing of objects (returns raw strings) |
+| `--help` | `-h` | Show help information |
+
+---
+
 ## 🚀 Quick Start
 
 ### Basic Usage (Synchronous)
@@ -1384,7 +1442,10 @@ fs.writeFileSync('config.yaml', improvedYaml);
 
 ## 🧪 Testing
 
+The library includes a comprehensive test suite with 150+ unit and integration tests.
+
 ```bash
+# Run all tests (Unit, Integration, and CLI)
 npm test
 ```
 

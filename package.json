@@ -1,6 +1,6 @@
 {
     "name": "toon-formatter",
-    "version": "2.1.1",
+    "version": "2.2.0",
     "funding": {
         "type": "github",
         "url": "https://github.com/sponsors/ankitpal181"
@@ -8,6 +8,9 @@
     "description": "A powerful library to convert between TOON, JSON, YAML, XML, and CSV with end-to-end encryption. Includes Unified Converters for direct format-to-format translation and LLM token optimization.",
     "main": "src/index.js",
     "type": "module",
+    "bin": {
+        "toon-formatter": "./bin/toon-formatter.js"
+    },
     "scripts": {
         "test": "node --test test/*.test.js",
         "test:watch": "node --test --watch test/*.test.js"
