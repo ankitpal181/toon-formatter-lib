@@ -61,7 +61,7 @@ users[3]{id,name,active}:
 
 ## 💻 CLI Utility
 
-**NEW in v2.1.0**: TOON Formatter now includes a powerful CLI utility for fast data conversion directly from your terminal!
+**NEW in v2.2.0**: TOON Formatter now includes a powerful CLI utility for fast data conversion directly from your terminal!
 
 ### Global Installation
 To use the `toon-formatter` command anywhere:
