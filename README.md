@@ -305,6 +305,64 @@ All conversion functions are available in both **synchronous** and **asynchronou
 
 ---
 
+## 🧠 Smart Code Optimization
+
+**NEW in v2.3.0**: The TOON Converter now features **Smart Code Optimization**, a preprocessing pipeline designed to maximize token efficiency when dealing with mixed text and code blocks.
+
+### Overview
+
+LLMs often process documentation or chat history that contains a mix of natural language, code snippets, and data (JSON/XML/CSV). Smart Code Optimization automatically cleans and compresses this content before conversion, resulting in even lower token counts.
+
+### Core Components
+
+#### 1. Code Detection & Reduction
+The library uses heuristics to detect code blocks (npm/git commands, shebangs, common programming patterns). Detected blocks are:
+- **Comment Stripped**: Single-line comments (`#` or `//`) are removed.
+- **Whitespace Compressed**: Multiple newlines are collapsed into single breaks.
+- **Preserved**: The semantic structure of the code is maintained while removing "token noise".
+
+#### 2. Expensive Words Replacement (Safe)
+The library contains a dictionary of **100+ verbose phrases** (Contracted/Common/Technical) and automatically replaces them with token-efficient abbreviations. 
+
+> [!IMPORTANT]
+> To maintain syntactic integrity, these replacements are **ONLY applied to natural language text**. Both **code blocks and data blocks (JSON/XML/CSV/TOON) are strictly preserved** and never modified by this process.
+
+#### 3. Targeted Data Extraction
+When using `jsonToToon`, `xmlToToon`, or `csvToToon`, the library:
+1. Extracts valid data blocks and code snippets from the text.
+2. Applies phrase replacements **only** to the remaining natural language text.
+3. Re-inserts the converted data and reduced code blocks into the resulting string.
+
+### How it works (Example)
+
+**Input Mixed Text:**
+```
+Please review this large language model configuration as soon as possible:
+{"model": "gpt-4", "temp": 0.7}
+
+npm install openai // install the helper library
+```
+
+**Optimized TOON Output:**
+```
+pls review this llm configuration asap:
+model: "gpt-4"
+temp: 0.7
+
+npm install openai
+```
+
+### Supported Formats
+
+Smart Code Optimization is active by default for all methods starting with `jsonTo`, `xmlTo`, and `csvTo`:
+
+- ✅ `jsonToToon()`, `jsonToYaml()`, `jsonToXml()`...
+- ✅ `xmlToToon()`, `xmlToJson()`, `xmlToCsv()`...
+- ✅ `csvToToon()`, `csvToJson()`, `csvToXml()`...
+- ❌ `yamlToToon()`, `toonToJson()` (These remain **Pure Data** only)
+
+---
+
 ## 🎯 Mixed Text Support
 
 ### What is Mixed Text?

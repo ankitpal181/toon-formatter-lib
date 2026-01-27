@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [2.3.0] - 2026-01-27
+
+### Added
+- **🧠 Smart Code Optimization**
+  - New preprocessing pipeline to maximize token efficiency for LLM contexts
+  - **Code Detection & Reduction**: Automatic identification, comment stripping, and whitespace compression for scripts and commands
+  - **Safe Expensive Words Replacement**: Case-insensitive abbreviation of 100+ verbose phrases in natural language text
+  - **Security & Integrity**: Replacement logic strictly avoids altering code blocks or data (JSON/XML/CSV) to prevent syntactic issues
+  - **Seamless Integration**: Automatically active for all mixed-text conversion methods (`jsonToToon`, `xmlToToon`, `csvToToon`, etc.)
+- **🧪 Expanded Test Infrastructure**
+  - Dedicated `code-optimization.test.js` for unit verification
+  - New `optimization-integration.test.js` for high-level mixed-content validation
+  - Total test suite expanded to 189 tests with 100% pass rate
+
+### Changed
+- Refined `isCode` heuristics to support common Node.js and shell execution patterns
+- Optimized asynchronous pipeline in `dataManagerAsync` for better performance
+- Improved mixed-text extraction robustness in `utils.js`
+
 
 ## [2.1.1] - 2025-12-18
 

@@ -2,6 +2,8 @@
  * Utility functions for TOON conversion
  */
 
+import { EXPENSIVE_WORDS } from './constants.js';
+
 /**
  * Encodes XML reserved characters to prevent parsing errors
  * @param {string} rawXmlString - Raw XML string
@@ -438,4 +440,304 @@ export function buildTag(key, value) {
     } else {
         return `<${sanitizedKey}>${value}</${sanitizedKey}>`;
     }
+}
+
+// ============================================================================
+// SMART CODE OPTIMIZATION FUNCTIONS
+// ============================================================================
+
+/**
+ * Detects if a string is likely code.
+ * Uses heuristics including command patterns, keywords, and structure.
+ * @param {string} value - String to check
+ * @returns {boolean} True if the string appears to be code
+ */
+export function isCode(value) {
+    if (typeof value !== 'string' || value.length < 5) return false;
+
+    const trimmed = value.trim();
+
+    // Single-line command patterns
+    const isSingleLineCommand = (
+        /^(npm|yarn|pnpm|pip|pip3|brew|apt|gem|go|cargo|composer|mvn|gradle|dotnet|conda)\s+/.test(trimmed) ||
+        /^(git|docker|kubectl|curl|wget|ssh|scp|rsync|sudo)\s+/.test(trimmed) ||
+        /^(node|python|python3|ruby|java|go|rust)\s+/.test(trimmed) ||
+        trimmed.startsWith('$') ||
+        trimmed.startsWith('>') ||
+        trimmed.startsWith('#!')
+    );
+
+    if (isSingleLineCommand) return true;
+
+    // Multi-line code detection
+    const hasMultipleLines = /\n/.test(trimmed);
+    const hasCodePatterns = /import|require\(|function |const |let |var |class |def |async |=>|\[|\];|print\(|console\.log\(/.test(trimmed);
+    const startsWithShebang = trimmed.startsWith('#!');
+
+    return hasMultipleLines && (hasCodePatterns || startsWithShebang);
+}
+
+/**
+ * Extracts code blocks from text, separated by double newlines.
+ * @param {string} text - Text containing potential code blocks
+ * @returns {Array<{code: string, start: number, end: number}>} Array of code block objects
+ */
+export function extractCodeBlocks(text) {
+    if (typeof text !== 'string') return [];
+
+    const results = [];
+    let currentPos = 0;
+
+    while (true) {
+        const nextBreak = text.indexOf('\n\n', currentPos);
+        let chunk, chunkEnd, nextStart;
+
+        if (nextBreak !== -1) {
+            chunk = text.substring(currentPos, nextBreak);
+            chunkEnd = nextBreak;
+            nextStart = nextBreak + 2; // skip \n\n
+        } else {
+            chunk = text.substring(currentPos);
+            chunkEnd = text.length;
+            nextStart = text.length;
+        }
+
+        const cleanChunk = chunk.trim();
+
+        if (cleanChunk && isCode(cleanChunk)) {
+            results.push({
+                code: cleanChunk,
+                start: currentPos,
+                end: chunkEnd
+            });
+        }
+
+        currentPos = nextStart;
+        if (currentPos >= text.length) break;
+    }
+
+    return results;
+}
+
+/**
+ * Reduces a code block by removing comments and compressing whitespace.
+ * @param {string} codeBlock - Code to reduce
+ * @returns {string} Reduced code
+ */
+export function reduceCodeBlock(codeBlock) {
+    let reduced = codeBlock;
+
+    // Remove double newlines
+    reduced = reduced.replace(/\n\n/g, '\n');
+
+    // Remove single-line comments (# for Python, shell, etc.)
+    reduced = reduced.replace(/#.*/g, '');
+
+    // Remove single-line comments (// for JS, Java, etc.)
+    reduced = reduced.replace(/\/\/.*/g, '');
+
+    // Remove trailing whitespace from each line
+    reduced = reduced.replace(/\s*\n/g, '\n');
+
+    // Remove any remaining double newlines created by comment removal
+    reduced = reduced.replace(/\n\n/g, '\n');
+
+    return reduced.trim();
+}
+
+/**
+ * Replaces verbose phrases with token-efficient abbreviations.
+ * Case-insensitive replacement using EXPENSIVE_WORDS dictionary.
+ * @param {string} text - Text to optimize
+ * @returns {string} Optimized text
+ */
+export function alterExpensiveWords(text) {
+    if (typeof text !== 'string') return text;
+
+    const keys = Object.keys(EXPENSIVE_WORDS);
+    if (keys.length === 0) return text;
+
+    // Build regex pattern from all keys
+    const pattern = new RegExp(
+        '\\b(' + keys.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')\\b',
+        'gi'
+    );
+
+    return text.replace(pattern, (match) => {
+        return EXPENSIVE_WORDS[match.toLowerCase()] || match;
+    });
+}
+
+/**
+ * Higher-order function that wraps converters with Smart Code Optimization.
+ * 
+ * Preprocessing steps:
+ * 1. Extract code blocks and replace with placeholders
+ * 2. Extract data blocks (JSON/XML/CSV) and replace with placeholders
+ * 3. Apply expensive word replacements to remaining text
+ * 4. Convert data blocks using the converter function
+ * 5. Re-insert converted data blocks
+ * 6. Reduce and re-insert code blocks
+ * 
+ * @param {Function} converterFn - The converter function to wrap
+ * @param {Function} extractFn - Function to extract data blocks (e.g., extractJsonFromString)
+ * @returns {Function} Wrapped converter function
+ */
+export function dataManager(converterFn, extractFn) {
+    return function (data, ...args) {
+        if (typeof data !== 'string') {
+            return converterFn(data, ...args);
+        }
+
+        let processedData = data;
+
+        // Step 1: Extract code blocks and replace with placeholders
+        const codeBlocks = extractCodeBlocks(processedData);
+
+        // Replace from end to start to preserve indices
+        for (let i = codeBlocks.length - 1; i >= 0; i--) {
+            const block = codeBlocks[i];
+            processedData = processedData.substring(0, block.start) +
+                `#code#${i}#code#` +
+                processedData.substring(block.end);
+        }
+
+        // Step 2: Extract data blocks and replace with placeholders
+        const dataBlocks = [];
+        let iterationCount = 0;
+        const maxIterations = 100;
+
+        while (iterationCount < maxIterations) {
+            const block = extractFn(processedData);
+            if (!block) break;
+
+            dataBlocks.push(block);
+            processedData = processedData.replace(block, `#data#${iterationCount}#data#`);
+            iterationCount++;
+        }
+
+        // Step 3: Apply expensive word replacements to remaining text
+        processedData = alterExpensiveWords(processedData);
+
+        // Step 4: Compress double newlines
+        processedData = processedData.replace(/\n\n/g, '\n');
+
+        // Step 5: Convert and re-insert data blocks
+        let convertedData = processedData.trim();
+
+        if (dataBlocks.length > 0) {
+            // Special Case: If input was 100% one data block and no code blocks, return raw result
+            if (dataBlocks.length === 1 && convertedData === '#data#0#data#' && codeBlocks.length === 0) {
+                return converterFn(dataBlocks[0].trim(), ...args);
+            }
+
+            for (let i = dataBlocks.length - 1; i >= 0; i--) {
+                const block = dataBlocks[i];
+                let convertedBlock = converterFn(block.trim(), ...args);
+
+                // If the converter returned an object/array, stringify it for insertion
+                if (typeof convertedBlock !== 'string') {
+                    try {
+                        convertedBlock = JSON.stringify(convertedBlock);
+                    } catch (e) {
+                        convertedBlock = String(convertedBlock);
+                    }
+                }
+
+                convertedData = convertedData.replace(`#data#${i}#data#`, convertedBlock);
+            }
+        } else {
+            // No data blocks found, convert the whole thing
+            convertedData = converterFn(convertedData, ...args);
+        }
+
+        // Step 6: Reduce and re-insert code blocks
+        for (let i = codeBlocks.length - 1; i >= 0; i--) {
+            const reducedCode = reduceCodeBlock(codeBlocks[i].code);
+            convertedData = convertedData.replace(`#code#${i}#code#`, reducedCode);
+        }
+
+        return convertedData;
+    };
+}
+
+/**
+ * Asynchronous version of dataManager.
+ * 
+ * @param {Function} converterFn - The ASYNC converter function to wrap
+ * @param {Function} extractFn - Function to extract data blocks
+ * @returns {Function} Wrapped ASYNC converter function
+ */
+export function dataManagerAsync(converterFn, extractFn) {
+    return async function (data, ...args) {
+        if (typeof data !== 'string') {
+            return await converterFn(data, ...args);
+        }
+
+        let processedData = data;
+
+        // Step 1: Extract code blocks and replace with placeholders
+        const codeBlocks = extractCodeBlocks(processedData);
+        for (let i = codeBlocks.length - 1; i >= 0; i--) {
+            const block = codeBlocks[i];
+            processedData = processedData.substring(0, block.start) +
+                `#code#${i}#code#` +
+                processedData.substring(block.end);
+        }
+
+        // Step 2: Extract data blocks and replace with placeholders
+        const dataBlocks = [];
+        let iterationCount = 0;
+        const maxIterations = 100;
+
+        while (iterationCount < maxIterations) {
+            const block = extractFn(processedData);
+            if (!block) break;
+
+            dataBlocks.push(block);
+            processedData = processedData.replace(block, `#data#${iterationCount}#data#`);
+            iterationCount++;
+        }
+
+        // Step 3: Apply expensive word replacements
+        processedData = alterExpensiveWords(processedData);
+
+        // Step 4: Compress double newlines
+        processedData = processedData.replace(/\n\n/g, '\n');
+
+        // Step 5: Convert and re-insert data blocks
+        let convertedData = processedData.trim();
+
+        if (dataBlocks.length > 0) {
+            // Special Case: If input was 100% one data block and no code blocks, return raw result
+            if (dataBlocks.length === 1 && convertedData === '#data#0#data#' && codeBlocks.length === 0) {
+                return await converterFn(dataBlocks[0].trim(), ...args);
+            }
+
+            for (let i = dataBlocks.length - 1; i >= 0; i--) {
+                const block = dataBlocks[i];
+                let convertedBlock = await converterFn(block.trim(), ...args);
+
+                if (typeof convertedBlock !== 'string') {
+                    try {
+                        convertedBlock = JSON.stringify(convertedBlock);
+                    } catch (e) {
+                        convertedBlock = String(convertedBlock);
+                    }
+                }
+
+                convertedData = convertedData.replace(`#data#${i}#data#`, convertedBlock);
+            }
+        } else {
+            convertedData = await converterFn(convertedData, ...args);
+        }
+
+        // Step 6: Reduce and re-insert code blocks
+        for (let i = codeBlocks.length - 1; i >= 0; i--) {
+            const reducedCode = reduceCodeBlock(codeBlocks[i].code);
+            convertedData = convertedData.replace(`#code#${i}#code#`, reducedCode);
+        }
+
+        return convertedData;
+    };
 }

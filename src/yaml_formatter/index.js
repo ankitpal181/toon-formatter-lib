@@ -7,7 +7,7 @@ import { jsonToYaml, jsonToYamlSync, yamlToJson, yamlToJsonSync } from '../json_
 import { xmlToYaml, xmlToYamlSync, yamlToXml, yamlToXmlSync } from './xml.js';
 import { csvToYaml, csvToYamlSync, yamlToCsv, yamlToCsvSync } from './csv.js';
 import { validateYamlString, validateYamlStringSync } from './validator.js';
-import { extractJsonFromString } from '../utils.js';
+import { dataManager, dataManagerAsync, extractJsonFromString, extractXmlFromString, extractCsvFromString } from '../utils.js';
 
 export class YamlConverter {
     /**
@@ -155,8 +155,9 @@ export class YamlConverter {
      */
     fromJson(jsonData, options = {}) {
         const { conversionMode = 'no_encryption' } = options;
+        const optimizedConverterFn = dataManager(jsonToYamlSync, extractJsonFromString);
         return this._convertWithEncryption(
-            (data) => jsonToYamlSync(data),
+            (data) => optimizedConverterFn(data),
             jsonData,
             conversionMode
         );
@@ -171,8 +172,9 @@ export class YamlConverter {
      */
     async fromJsonAsync(jsonData, options = {}) {
         const { conversionMode = 'no_encryption' } = options;
+        const optimizedConverterFn = dataManagerAsync(jsonToYaml, extractJsonFromString);
         return this._convertWithEncryptionAsync(
-            async (data) => jsonToYaml(data),
+            async (data) => optimizedConverterFn(data),
             jsonData,
             conversionMode
         );
@@ -229,8 +231,9 @@ export class YamlConverter {
      */
     fromXml(xmlString, options = {}) {
         const { conversionMode = 'no_encryption' } = options;
+        const optimizedConverterFn = dataManager(xmlToYamlSync, extractXmlFromString);
         return this._convertWithEncryption(
-            (data) => xmlToYamlSync(data),
+            (data) => optimizedConverterFn(data),
             xmlString,
             conversionMode
         );
@@ -245,8 +248,9 @@ export class YamlConverter {
      */
     async fromXmlAsync(xmlString, options = {}) {
         const { conversionMode = 'no_encryption' } = options;
+        const optimizedConverterFn = dataManagerAsync(xmlToYaml, extractXmlFromString);
         return this._convertWithEncryptionAsync(
-            async (data) => xmlToYaml(data),
+            async (data) => optimizedConverterFn(data),
             xmlString,
             conversionMode
         );
@@ -295,8 +299,9 @@ export class YamlConverter {
      */
     fromCsv(csvString, options = {}) {
         const { conversionMode = 'no_encryption' } = options;
+        const optimizedConverterFn = dataManager(csvToYamlSync, extractCsvFromString);
         return this._convertWithEncryption(
-            (data) => csvToYamlSync(data),
+            (data) => optimizedConverterFn(data),
             csvString,
             conversionMode
         );
@@ -311,8 +316,9 @@ export class YamlConverter {
      */
     async fromCsvAsync(csvString, options = {}) {
         const { conversionMode = 'no_encryption' } = options;
+        const optimizedConverterFn = dataManagerAsync(csvToYaml, extractCsvFromString);
         return this._convertWithEncryptionAsync(
-            async (data) => csvToYaml(data),
+            async (data) => optimizedConverterFn(data),
             csvString,
             conversionMode
         );
@@ -416,7 +422,8 @@ export class YamlConverter {
      * @returns {string} YAML formatted string
      */
     static fromJson(jsonData) {
-        return jsonToYamlSync(jsonData);
+        const optimizedConverterFn = dataManager(jsonToYamlSync, extractJsonFromString);
+        return optimizedConverterFn(jsonData);
     }
 
     /**
@@ -425,7 +432,8 @@ export class YamlConverter {
      * @returns {Promise<string>} YAML formatted string
      */
     static async fromJsonAsync(jsonData) {
-        return jsonToYaml(jsonData);
+        const optimizedConverterFn = dataManagerAsync(jsonToYaml, extractJsonFromString);
+        return optimizedConverterFn(jsonData);
     }
 
     /**
@@ -456,7 +464,8 @@ export class YamlConverter {
      * @returns {string} YAML formatted string
      */
     static fromXml(xmlString) {
-        return xmlToYamlSync(xmlString);
+        const optimizedConverterFn = dataManager(xmlToYamlSync, extractXmlFromString);
+        return optimizedConverterFn(xmlString);
     }
 
     /**
@@ -465,7 +474,8 @@ export class YamlConverter {
      * @returns {Promise<string>} YAML formatted string
      */
     static async fromXmlAsync(xmlString) {
-        return xmlToYaml(xmlString);
+        const optimizedConverterFn = dataManagerAsync(xmlToYaml, extractXmlFromString);
+        return optimizedConverterFn(xmlString);
     }
 
     /**
@@ -492,7 +502,8 @@ export class YamlConverter {
      * @returns {string} YAML formatted string
      */
     static fromCsv(csvString) {
-        return csvToYamlSync(csvString);
+        const optimizedConverterFn = dataManager(csvToYamlSync, extractCsvFromString);
+        return optimizedConverterFn(csvString);
     }
 
     /**
@@ -501,7 +512,8 @@ export class YamlConverter {
      * @returns {Promise<string>} YAML formatted string
      */
     static async fromCsvAsync(csvString) {
-        return csvToYaml(csvString);
+        const optimizedConverterFn = dataManagerAsync(csvToYaml, extractCsvFromString);
+        return optimizedConverterFn(csvString);
     }
 
     /**

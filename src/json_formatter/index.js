@@ -7,6 +7,7 @@ import { yamlToJson, yamlToJsonSync, jsonToYaml, jsonToYamlSync } from './yaml.j
 import { xmlToJson, xmlToJsonSync, jsonToXml, jsonToXmlSync } from './xml.js';
 import { csvToJson, csvToJsonSync, jsonToCsv, jsonToCsvSync } from './csv.js';
 import { validateJsonString, validateJsonStringSync } from './validator.js';
+import { dataManager, dataManagerAsync, extractJsonFromString, extractXmlFromString, extractCsvFromString } from '../utils.js';
 
 export class JsonConverter {
     /**
@@ -110,8 +111,9 @@ export class JsonConverter {
      */
     toToon(jsonData, options = {}) {
         const { conversionMode = 'no_encryption' } = options;
+        const optimizedConverterFn = dataManager(jsonToToonSync, extractJsonFromString);
         return this._convertWithEncryption(
-            (data) => jsonToToonSync(data),
+            (data) => optimizedConverterFn(data),
             jsonData,
             conversionMode
         );
@@ -126,8 +128,9 @@ export class JsonConverter {
      */
     async toToonAsync(jsonData, options = {}) {
         const { conversionMode = 'no_encryption' } = options;
+        const optimizedConverterFn = dataManagerAsync(jsonToToon, extractJsonFromString);
         return this._convertWithEncryptionAsync(
-            async (data) => jsonToToon(data),
+            async (data) => optimizedConverterFn(data),
             jsonData,
             conversionMode
         );
@@ -178,8 +181,9 @@ export class JsonConverter {
      */
     toYaml(jsonData, options = {}) {
         const { conversionMode = 'no_encryption' } = options;
+        const optimizedConverterFn = dataManager(jsonToYamlSync, extractJsonFromString);
         return this._convertWithEncryption(
-            (data) => jsonToYamlSync(data),
+            (data) => optimizedConverterFn(data),
             jsonData,
             conversionMode
         );
@@ -194,8 +198,9 @@ export class JsonConverter {
      */
     async toYamlAsync(jsonData, options = {}) {
         const { conversionMode = 'no_encryption' } = options;
+        const optimizedConverterFn = dataManagerAsync(jsonToYaml, extractJsonFromString);
         return this._convertWithEncryptionAsync(
-            async (data) => jsonToYaml(data),
+            async (data) => optimizedConverterFn(data),
             jsonData,
             conversionMode
         );
@@ -212,8 +217,9 @@ export class JsonConverter {
      */
     fromXml(xmlString, options = {}) {
         const { conversionMode = 'no_encryption' } = options;
+        const optimizedConverterFn = dataManager(xmlToJsonSync, extractXmlFromString);
         return this._convertWithEncryption(
-            (data) => xmlToJsonSync(data),
+            (data) => optimizedConverterFn(data),
             xmlString,
             conversionMode
         );
@@ -228,8 +234,9 @@ export class JsonConverter {
      */
     async fromXmlAsync(xmlString, options = {}) {
         const { conversionMode = 'no_encryption' } = options;
+        const optimizedConverterFn = dataManagerAsync(xmlToJson, extractXmlFromString);
         return this._convertWithEncryptionAsync(
-            async (data) => xmlToJson(data),
+            async (data) => optimizedConverterFn(data),
             xmlString,
             conversionMode
         );
@@ -244,8 +251,9 @@ export class JsonConverter {
      */
     toXml(jsonData, options = {}) {
         const { conversionMode = 'no_encryption' } = options;
+        const optimizedConverterFn = dataManager(jsonToXmlSync, extractJsonFromString);
         return this._convertWithEncryption(
-            (data) => jsonToXmlSync(data),
+            (data) => optimizedConverterFn(data),
             jsonData,
             conversionMode
         );
@@ -260,8 +268,9 @@ export class JsonConverter {
      */
     async toXmlAsync(jsonData, options = {}) {
         const { conversionMode = 'no_encryption' } = options;
+        const optimizedConverterFn = dataManagerAsync(jsonToXml, extractJsonFromString);
         return this._convertWithEncryptionAsync(
-            async (data) => jsonToXml(data),
+            async (data) => optimizedConverterFn(data),
             jsonData,
             conversionMode
         );
@@ -278,8 +287,9 @@ export class JsonConverter {
      */
     fromCsv(csvString, options = {}) {
         const { conversionMode = 'no_encryption' } = options;
+        const optimizedConverterFn = dataManager(csvToJsonSync, extractCsvFromString);
         return this._convertWithEncryption(
-            (data) => csvToJsonSync(data),
+            (data) => optimizedConverterFn(data),
             csvString,
             conversionMode
         );
@@ -294,8 +304,9 @@ export class JsonConverter {
      */
     async fromCsvAsync(csvString, options = {}) {
         const { conversionMode = 'no_encryption' } = options;
+        const optimizedConverterFn = dataManagerAsync(csvToJson, extractCsvFromString);
         return this._convertWithEncryptionAsync(
-            async (data) => csvToJson(data),
+            async (data) => optimizedConverterFn(data),
             csvString,
             conversionMode
         );
@@ -310,8 +321,9 @@ export class JsonConverter {
      */
     toCsv(jsonData, options = {}) {
         const { conversionMode = 'no_encryption' } = options;
+        const optimizedConverterFn = dataManager(jsonToCsvSync, extractJsonFromString);
         return this._convertWithEncryption(
-            (data) => jsonToCsvSync(data),
+            (data) => optimizedConverterFn(data),
             jsonData,
             conversionMode
         );
@@ -326,8 +338,9 @@ export class JsonConverter {
      */
     async toCsvAsync(jsonData, options = {}) {
         const { conversionMode = 'no_encryption' } = options;
+        const optimizedConverterFn = dataManagerAsync(jsonToCsv, extractJsonFromString);
         return this._convertWithEncryptionAsync(
-            async (data) => jsonToCsv(data),
+            async (data) => optimizedConverterFn(data),
             jsonData,
             conversionMode
         );
@@ -383,7 +396,8 @@ export class JsonConverter {
      * @returns {string} TOON formatted string
      */
     static toToon(jsonData) {
-        return jsonToToonSync(jsonData);
+        const optimizedConverterFn = dataManager(jsonToToonSync, extractJsonFromString);
+        return optimizedConverterFn(jsonData);
     }
 
     /**
@@ -392,7 +406,8 @@ export class JsonConverter {
      * @returns {Promise<string>} TOON formatted string
      */
     static async toToonAsync(jsonData) {
-        return jsonToToon(jsonData);
+        const optimizedConverterFn = dataManagerAsync(jsonToToon, extractJsonFromString);
+        return optimizedConverterFn(jsonData);
     }
 
     /**
@@ -421,7 +436,8 @@ export class JsonConverter {
      * @returns {string} YAML formatted string
      */
     static toYaml(jsonData) {
-        return jsonToYamlSync(jsonData);
+        const optimizedConverterFn = dataManager(jsonToYamlSync, extractJsonFromString);
+        return optimizedConverterFn(jsonData);
     }
 
     /**
@@ -430,7 +446,8 @@ export class JsonConverter {
      * @returns {Promise<string>} YAML formatted string
      */
     static async toYamlAsync(jsonData) {
-        return jsonToYaml(jsonData);
+        const optimizedConverterFn = dataManagerAsync(jsonToYaml, extractJsonFromString);
+        return optimizedConverterFn(jsonData);
     }
 
     /**
@@ -439,7 +456,8 @@ export class JsonConverter {
      * @returns {Object|string} JSON object or string
      */
     static fromXml(xmlString) {
-        return xmlToJsonSync(xmlString);
+        const optimizedConverterFn = dataManager(xmlToJsonSync, extractXmlFromString);
+        return optimizedConverterFn(xmlString);
     }
 
     /**
@@ -448,7 +466,8 @@ export class JsonConverter {
      * @returns {Promise<Object|string>} JSON object or string
      */
     static async fromXmlAsync(xmlString) {
-        return xmlToJson(xmlString);
+        const optimizedConverterFn = dataManagerAsync(xmlToJson, extractXmlFromString);
+        return optimizedConverterFn(xmlString);
     }
 
     /**
@@ -457,7 +476,8 @@ export class JsonConverter {
      * @returns {string} XML formatted string
      */
     static toXml(jsonData) {
-        return jsonToXmlSync(jsonData);
+        const optimizedConverterFn = dataManager(jsonToXmlSync, extractJsonFromString);
+        return optimizedConverterFn(jsonData);
     }
 
     /**
@@ -466,7 +486,8 @@ export class JsonConverter {
      * @returns {Promise<string>} XML formatted string
      */
     static async toXmlAsync(jsonData) {
-        return jsonToXml(jsonData);
+        const optimizedConverterFn = dataManagerAsync(jsonToXml, extractJsonFromString);
+        return optimizedConverterFn(jsonData);
     }
 
     /**
@@ -475,7 +496,8 @@ export class JsonConverter {
      * @returns {Array<Object>|string} JSON object or string
      */
     static fromCsv(csvString) {
-        return csvToJsonSync(csvString);
+        const optimizedConverterFn = dataManager(csvToJsonSync, extractCsvFromString);
+        return optimizedConverterFn(csvString);
     }
 
     /**
@@ -484,7 +506,8 @@ export class JsonConverter {
      * @returns {Promise<Array<Object>|string>} JSON object or string
      */
     static async fromCsvAsync(csvString) {
-        return csvToJson(csvString);
+        const optimizedConverterFn = dataManagerAsync(csvToJson, extractCsvFromString);
+        return optimizedConverterFn(csvString);
     }
 
     /**
@@ -493,7 +516,8 @@ export class JsonConverter {
      * @returns {string} CSV formatted string
      */
     static toCsv(jsonData) {
-        return jsonToCsvSync(jsonData);
+        const optimizedConverterFn = dataManager(jsonToCsvSync, extractJsonFromString);
+        return optimizedConverterFn(jsonData);
     }
 
     /**
@@ -502,7 +526,8 @@ export class JsonConverter {
      * @returns {Promise<string>} CSV formatted string
      */
     static async toCsvAsync(jsonData) {
-        return jsonToCsv(jsonData);
+        const optimizedConverterFn = dataManagerAsync(jsonToCsv, extractJsonFromString);
+        return await optimizedConverterFn(jsonData);
     }
 
     /**

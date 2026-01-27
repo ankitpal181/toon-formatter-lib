@@ -21,7 +21,9 @@ import {
     formatValue,
     extractJsonFromString,
     extractXmlFromString,
-    extractCsvFromString
+    extractCsvFromString,
+    dataManager,
+    dataManagerAsync
 } from './utils.js';
 import { Encryptor } from './encryptor.js';
 import { JsonConverter } from './json_formatter/index.js';
@@ -168,7 +170,8 @@ export class ToonConverter {
      */
     fromJson(jsonData, options = {}) {
         const { conversionMode = 'no_encryption' } = options;
-        return this._convertWithEncryption(jsonToToonSync, jsonData, conversionMode);
+        const optimizedConverterFn = dataManager(jsonToToonSync, extractJsonFromString);
+        return this._convertWithEncryption(optimizedConverterFn, jsonData, conversionMode);
     }
 
     /**
@@ -180,7 +183,8 @@ export class ToonConverter {
      */
     async fromJsonAsync(jsonData, options = {}) {
         const { conversionMode = 'no_encryption' } = options;
-        return this._convertWithEncryptionAsync(jsonToToon, jsonData, conversionMode);
+        const optimizedConverterFn = dataManagerAsync(jsonToToon, extractJsonFromString);
+        return this._convertWithEncryptionAsync(optimizedConverterFn, jsonData, conversionMode);
     }
 
     /**
@@ -274,7 +278,8 @@ export class ToonConverter {
      */
     fromXml(xmlString, options = {}) {
         const { conversionMode = 'no_encryption' } = options;
-        return this._convertWithEncryption(xmlToToonSync, xmlString, conversionMode);
+        const optimizedConverterFn = dataManager(xmlToToonSync, extractXmlFromString);
+        return this._convertWithEncryption(optimizedConverterFn, xmlString, conversionMode);
     }
 
     /**
@@ -286,7 +291,8 @@ export class ToonConverter {
      */
     async fromXmlAsync(xmlString, options = {}) {
         const { conversionMode = 'no_encryption' } = options;
-        return this._convertWithEncryptionAsync(xmlToToon, xmlString, conversionMode);
+        const optimizedConverterFn = dataManagerAsync(xmlToToon, extractXmlFromString);
+        return this._convertWithEncryptionAsync(optimizedConverterFn, xmlString, conversionMode);
     }
 
     /**
@@ -322,7 +328,8 @@ export class ToonConverter {
      */
     fromCsv(csvString, options = {}) {
         const { conversionMode = 'no_encryption' } = options;
-        return this._convertWithEncryption(csvToToonSync, csvString, conversionMode);
+        const optimizedConverterFn = dataManager(csvToToonSync, extractCsvFromString);
+        return this._convertWithEncryption(optimizedConverterFn, csvString, conversionMode);
     }
 
     /**
@@ -334,7 +341,8 @@ export class ToonConverter {
      */
     async fromCsvAsync(csvString, options = {}) {
         const { conversionMode = 'no_encryption' } = options;
-        return this._convertWithEncryptionAsync(csvToToon, csvString, conversionMode);
+        const optimizedConverterFn = dataManagerAsync(csvToToon, extractCsvFromString);
+        return this._convertWithEncryptionAsync(optimizedConverterFn, csvString, conversionMode);
     }
 
     /**
@@ -391,7 +399,8 @@ export class ToonConverter {
      * @returns {string} TOON formatted string
      */
     static fromJson(jsonData) {
-        return jsonToToonSync(jsonData);
+        const optimizedConverterFn = dataManager(jsonToToonSync, extractJsonFromString);
+        return optimizedConverterFn(jsonData);
     }
 
     /**
@@ -400,7 +409,8 @@ export class ToonConverter {
      * @returns {Promise<string>} TOON formatted string
      */
     static async fromJsonAsync(jsonData) {
-        return jsonToToon(jsonData);
+        const optimizedConverterFn = dataManagerAsync(jsonToToon, extractJsonFromString);
+        return optimizedConverterFn(jsonData);
     }
 
     /**
@@ -465,7 +475,8 @@ export class ToonConverter {
      * @returns {string} TOON formatted string
      */
     static fromXml(xmlString) {
-        return xmlToToonSync(xmlString);
+        const optimizedConverterFn = dataManager(xmlToToonSync, extractXmlFromString);
+        return optimizedConverterFn(xmlString);
     }
 
     /**
@@ -474,7 +485,8 @@ export class ToonConverter {
      * @returns {Promise<string>} TOON formatted string
      */
     static async fromXmlAsync(xmlString) {
-        return xmlToToon(xmlString);
+        const optimizedConverterFn = dataManagerAsync(xmlToToon, extractXmlFromString);
+        return optimizedConverterFn(xmlString);
     }
 
     /**
@@ -501,7 +513,8 @@ export class ToonConverter {
      * @returns {Promise<string>} TOON formatted string
      */
     static async fromCsvAsync(csvString) {
-        return csvToToon(csvString);
+        const optimizedConverterFn = dataManagerAsync(csvToToon, extractCsvFromString);
+        return optimizedConverterFn(csvString);
     }
 
     /**
@@ -510,7 +523,8 @@ export class ToonConverter {
      * @returns {string} TOON formatted string
      */
     static fromCsv(csvString) {
-        return csvToToonSync(csvString);
+        const optimizedConverterFn = dataManager(csvToToonSync, extractCsvFromString);
+        return optimizedConverterFn(csvString);
     }
 
     /**
