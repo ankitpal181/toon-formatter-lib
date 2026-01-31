@@ -125,7 +125,10 @@ export function extractJsonFromString(text) {
             if (text[i] === '{' || text[i] === '[') {
                 // Ignore if preceded by non-whitespace (e.g. key[2]), 
                 // unless it's a closing bracket/brace or XML tag end
-                if (i > 0 && /\S/.test(text[i - 1]) && !/[\}\]>]/.test(text[i - 1])) {
+                const relativeIndex = text.slice(i).search(/\]{/);
+                if (relativeIndex !== -1 && /^\[\d*$/.test(text.slice(i, i + relativeIndex))) {
+                    continue;
+                } else if (i > 0 && /\S/.test(text[i - 1]) && !/[\}\]>]/.test(text[i - 1])) {
                     continue;
                 }
                 startIndex = i;
@@ -471,7 +474,7 @@ export function isCode(value) {
 
     // Multi-line code detection
     const hasMultipleLines = /\n/.test(trimmed);
-    const hasCodePatterns = /import|require\(|function |const |let |var |class |def |async |=>|\[|\];|print\(|console\.log\(/.test(trimmed);
+    const hasCodePatterns = /import|require\(|function |const |let |var |class |def |async |=>|;|print\(|console\.log\(/.test(trimmed);
     const startsWithShebang = trimmed.startsWith('#!');
 
     return hasMultipleLines && (hasCodePatterns || startsWithShebang);
